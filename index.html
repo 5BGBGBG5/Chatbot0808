@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>inecta Discovery</title>
+  <style>
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:#0f172a; color:#e2e8f0 }
+    .app { max-width:800px; margin:0 auto; padding:24px }
+    .chat { background:#0b1220; border:1px solid #1e293b; border-radius:16px; padding:16px; min-height:60vh }
+    .row { display:flex; gap:12px; margin-top:12px }
+    .msg { padding:12px 14px; border-radius:12px; max-width:70% }
+    .user { background:#1f2a44; align-self:flex-end; margin-left:auto }
+    .bot { background:#111827; border:1px solid #1e293b; }
+    .input { display:flex; gap:8px; margin-top:12px }
+    input,button { padding:12px; border-radius:10px; border:1px solid #2a364d; background:#0b1220; color:#e2e8f0 }
+    button { cursor:pointer }
+    a { color:#93c5fd }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>inecta discovery</h1>
+    <div id="chat" class="chat"></div>
+    <div class="input">
+      <input id="text" placeholder="Type here…" autofocus />
+      <button id="send">Send</button>
+    </div>
+  </div>
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('text');
+    const send = document.getElementById('send');
+    const API = 'https://<YOUR_N8N_HOST>/webhook/inecta-discovery'; // n8n webhook URL
+    const sessionKey = 'inecta_session_id';
+
+    function add(role, text, html=false){
+      const row = document.createElement('div'); row.className='row';
+      const div = document.createElement('div'); div.className = 'msg ' + (role==='user'?'user':'bot');
+      div[html?'innerHTML':'textContent'] = text;
+      row.appendChild(div); chat.appendChild(row); chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMsg() {
+      const content = input.value.trim(); if(!content) return;
+      add('user', content); input.value='';
+      const payload = {
+        session_id: localStorage.getItem(sessionKey) || null,
+        message: content
+      };
+      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.session_id) localStorage.setItem(sessionKey, data.session_id);
+      if (data.reply_html) add('assistant', data.reply_html, true);
+      else if (data.reply) add('assistant', data.reply);
+    }
+
+    send.onclick = sendMsg;
+    input.addEventListener('keydown', e => { if(e.key==='Enter') sendMsg(); });
+
+    // greet on load
+    add('assistant', "Hi! I’m your inecta discovery assistant. What’s your company name?");
+  </script>
+</body>
+</html>
