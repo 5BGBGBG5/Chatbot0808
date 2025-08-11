@@ -268,21 +268,37 @@
       localStorage.setItem(config.historyKey, JSON.stringify(state.history));
     }
 
-    // Initialize session and load history
+    // UPDATED: Initialize session and load history
     function initSession() {
       const storedHistory = localStorage.getItem(config.historyKey);
       if (storedHistory) {
         state.history = JSON.parse(storedHistory);
+
+        // ROBUSTNESS CHECK: Ensure history starts with a system prompt.
+        if (state.history.length === 0 || state.history[0].role !== 'system') {
+          // If history is empty or doesn't have a system prompt, prepend it.
+          state.history.unshift({
+            role: 'system',
+            content: 'You are a helpful assistant. Respond ONLY with a JSON object containing a single key named "reply". Your reply text must be the value of this key.'
+          });
+          saveHistory(); // Save the corrected history.
+        }
+
         elements.chat.innerHTML = ''; // Clear chat before repopulating
         state.history.forEach(message => renderMessage(message.role, message.content, message.isHtml));
         updateStatus('Session restored', 'connected');
       } else {
-        // Start a new session with a welcome message
+        // Start a new session with a system prompt and a welcome message
+        state.history.push({
+            role: 'system',
+            content: 'You are a helpful assistant. Respond ONLY with a JSON object containing a single key named "reply". Your reply text must be the value of this key.'
+        });
+
         const welcomeMessage = { 
           role: 'assistant', 
           content: 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?' 
         };
-        addMessage(welcomeMessage);
+        addMessage(welcomeMessage); // This will also render the message
         updateStatus('New session created', 'connected');
       }
     }
@@ -301,6 +317,9 @@
 
     // Renders a message to the UI
     function renderMessage(role, content, isHtml = false) {
+      // Do not render the system prompt to the user
+      if (role === 'system') return;
+
       const row = document.createElement('div');
       row.className = 'row';
       
@@ -353,7 +372,7 @@
     }
 
     // Send message with retry logic
-    async function sendMessage() { // No longer needs content passed in
+    async function sendMessage(attempt = 1) { // Added attempt parameter for retry
       try {
         const payload = {
           // UPDATED: Send the entire history
@@ -392,7 +411,7 @@
         
         if (attempt < config.retryAttempts) {
           updateStatus(`Connection error. Retrying... (${attempt}/${config.retryAttempts})`, 'error');
-          setTimeout(() => sendMessage(content, attempt + 1), config.retryDelay * attempt);
+          setTimeout(() => sendMessage(attempt + 1), config.retryDelay * attempt);
         } else {
           addMessage({role: 'assistant', content: 'I\'m having trouble connecting to the server. Please check your connection and try again.'});
           updateStatus('Connection failed. Please refresh the page.', 'error');
