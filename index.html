@@ -205,6 +205,25 @@
     .status.connected { color: #4ade80; }
     .status.error { color: #f87171; }
     
+    .clear-history {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .clear-history:hover {
+      background: rgba(239, 68, 68, 0.2);
+      transform: translateY(-1px);
+    }
+    
     a { 
       color: #60a5fa;
       text-decoration: none;
@@ -219,6 +238,8 @@
 </head>
 <body>
   <div class="app">
+    <button class="clear-history" onclick="clearHistory()">Clear History</button>
+    
     <div class="header">
       <h1>Inecta Food ERP</h1>
       <p class="subtitle">Discovery Chat - Let's understand your needs</p>
@@ -244,7 +265,7 @@
     // Configuration
     const config = {
       webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inecta-ping',
-      historyKey: 'inecta_chat_history', // Updated key for history
+      historyKey: 'inecta_chat_history',
       retryAttempts: 3,
       retryDelay: 1000
     };
@@ -252,7 +273,7 @@
     // State management
     const state = {
       isTyping: false,
-      history: [], // NEW: To store the entire conversation
+      history: [],
     };
 
     // DOM elements
@@ -263,44 +284,79 @@
       status: document.getElementById('status')
     };
 
-    // NEW: Function to save history to localStorage
+    // System prompt for the assistant
+    const SYSTEM_PROMPT = `You are a helpful Inecta Food ERP assistant specializing in understanding food business needs. 
+    You help businesses identify their requirements for ERP implementation.
+    Be friendly, professional, and ask clarifying questions to better understand their operations.
+    Focus on understanding their current challenges, business size, types of products, and operational workflows.
+    Respond in a conversational manner and guide them through the discovery process.`;
+
+    // Function to save history to localStorage
     function saveHistory() {
       localStorage.setItem(config.historyKey, JSON.stringify(state.history));
     }
 
-    // UPDATED: Initialize session and load history
+    // Clear history function
+    function clearHistory() {
+      if (confirm('Are you sure you want to clear the conversation history?')) {
+        localStorage.removeItem(config.historyKey);
+        state.history = [];
+        elements.chat.innerHTML = '';
+        initSession();
+      }
+    }
+
+    // Initialize session and load history
     function initSession() {
       const storedHistory = localStorage.getItem(config.historyKey);
+      
       if (storedHistory) {
-        state.history = JSON.parse(storedHistory);
-
-        // ROBUSTNESS CHECK: Ensure history starts with a system prompt.
-        if (state.history.length === 0 || state.history[0].role !== 'system') {
-          // If history is empty or doesn't have a system prompt, prepend it.
-          state.history.unshift({
-            role: 'system',
-            content: 'You are a helpful assistant. Respond ONLY with a JSON object containing a single key named "reply". Your reply text must be the value of this key.'
+        try {
+          state.history = JSON.parse(storedHistory);
+          
+          // Ensure history starts with system prompt
+          if (state.history.length === 0 || state.history[0].role !== 'system') {
+            state.history.unshift({
+              role: 'system',
+              content: SYSTEM_PROMPT
+            });
+            saveHistory();
+          }
+          
+          // Render all messages except system
+          elements.chat.innerHTML = '';
+          state.history.forEach(message => {
+            if (message.role !== 'system') {
+              renderMessage(message.role, message.content);
+            }
           });
-          saveHistory(); // Save the corrected history.
+          
+          updateStatus('Session restored', 'connected');
+        } catch (e) {
+          console.error('Error loading history:', e);
+          startNewSession();
         }
-
-        elements.chat.innerHTML = ''; // Clear chat before repopulating
-        state.history.forEach(message => renderMessage(message.role, message.content, message.isHtml));
-        updateStatus('Session restored', 'connected');
       } else {
-        // Start a new session with a system prompt and a welcome message
-        state.history.push({
-            role: 'system',
-            content: 'You are a helpful assistant. Respond ONLY with a JSON object containing a single key named "reply". Your reply text must be the value of this key.'
-        });
-
-        const welcomeMessage = { 
-          role: 'assistant', 
-          content: 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?' 
-        };
-        addMessage(welcomeMessage); // This will also render the message
-        updateStatus('New session created', 'connected');
+        startNewSession();
       }
+    }
+
+    // Start a new session
+    function startNewSession() {
+      state.history = [{
+        role: 'system',
+        content: SYSTEM_PROMPT
+      }];
+      
+      const welcomeMessage = { 
+        role: 'assistant', 
+        content: 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?' 
+      };
+      
+      state.history.push(welcomeMessage);
+      saveHistory();
+      renderMessage(welcomeMessage.role, welcomeMessage.content);
+      updateStatus('New session created', 'connected');
     }
 
     // Update status message
@@ -315,33 +371,18 @@
       }
     }
 
-    // Renders a message to the UI
-    function renderMessage(role, content, isHtml = false) {
-      // Do not render the system prompt to the user
-      if (role === 'system') return;
-
+    // Render a message to the UI
+    function renderMessage(role, content) {
       const row = document.createElement('div');
       row.className = 'row';
       
       const msg = document.createElement('div');
       msg.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
-      
-      if (isHtml) {
-        msg.innerHTML = content;
-      } else {
-        msg.textContent = content;
-      }
+      msg.textContent = content;
       
       row.appendChild(msg);
       elements.chat.appendChild(row);
       elements.chat.scrollTop = elements.chat.scrollHeight;
-    }
-
-    // Adds a message to history, saves it, and renders it
-    function addMessage(message) {
-      state.history.push(message);
-      saveHistory();
-      renderMessage(message.role, message.content, message.isHtml);
     }
 
     // Show typing indicator
@@ -372,11 +413,14 @@
     }
 
     // Send message with retry logic
-    async function sendMessage(attempt = 1) { // Added attempt parameter for retry
+    async function sendMessage(attempt = 1) {
       try {
+        // Prepare the payload with properly formatted messages
         const payload = {
-          // UPDATED: Send the entire history
-          history: state.history 
+          messages: state.history.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
         };
 
         const response = await fetch(config.webhookUrl, {
@@ -394,15 +438,19 @@
         const data = await response.json();
         
         hideTyping();
+        
+        // Extract the reply from the response
+        const replyContent = data.reply || 'I received your message but couldn\'t generate a response. Please try again.';
+        
         const botMessage = {
-            role: 'assistant',
-            content: data.reply || 'I received your message but couldn\'t generate a response. Please try again.',
-            isHtml: !!data.reply_html
+          role: 'assistant',
+          content: replyContent
         };
-        if(data.reply_html) botMessage.content = data.reply_html;
-
-        addMessage(botMessage); // Add bot's response to history
-
+        
+        state.history.push(botMessage);
+        saveHistory();
+        renderMessage(botMessage.role, botMessage.content);
+        
         updateStatus('Message sent', 'connected');
 
       } catch (error) {
@@ -413,8 +461,14 @@
           updateStatus(`Connection error. Retrying... (${attempt}/${config.retryAttempts})`, 'error');
           setTimeout(() => sendMessage(attempt + 1), config.retryDelay * attempt);
         } else {
-          addMessage({role: 'assistant', content: 'I\'m having trouble connecting to the server. Please check your connection and try again.'});
-          updateStatus('Connection failed. Please refresh the page.', 'error');
+          const errorMessage = {
+            role: 'assistant',
+            content: 'I\'m having trouble connecting to the server. Please check your connection and try again.'
+          };
+          state.history.push(errorMessage);
+          saveHistory();
+          renderMessage(errorMessage.role, errorMessage.content);
+          updateStatus('Connection failed. Please try refreshing the page.', 'error');
         }
       }
     }
@@ -424,8 +478,12 @@
       const content = elements.input.value.trim();
       if (!content || state.isTyping) return;
 
-      // Add user message to history
-      addMessage({ role: 'user', content: content });
+      // Add user message
+      const userMessage = { role: 'user', content: content };
+      state.history.push(userMessage);
+      saveHistory();
+      renderMessage(userMessage.role, userMessage.content);
+      
       elements.input.value = '';
       
       // Disable input while processing
@@ -434,7 +492,7 @@
       
       showTyping();
       
-      // Send the entire history for a response
+      // Send message
       await sendMessage();
       
       // Re-enable input
