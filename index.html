@@ -340,7 +340,7 @@
       }
     }
 
-    // Send message with retry logic
+    // --- CORRECTED sendMessage FUNCTION FOR OPTION 1 ---
     async function sendMessage(content, attempt = 1) {
       try {
         const payload = {
@@ -361,7 +361,8 @@
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        // This now correctly receives an object: { "reply": "..." }
+        const data = await response.json(); 
         
         // Update session if provided
         if (data.session_id && data.session_id !== state.sessionId) {
@@ -369,22 +370,16 @@
           localStorage.setItem(config.sessionKey, state.sessionId);
         }
 
-        // --- CORRECTED SECTION START ---
-        // Get the first object from the response array.
-        const responsePayload = data[0];
-
         // Display response
         hideTyping();
-
-        // Check the payload object for the reply keys
-        if (responsePayload && responsePayload.reply_html) {
-          addMessage('assistant', responsePayload.reply_html, true);
-        } else if (responsePayload && responsePayload.reply) {
-          addMessage('assistant', responsePayload.reply);
+        // This logic now works because data is an object
+        if (data.reply_html) {
+          addMessage('assistant', data.reply_html, true);
+        } else if (data.reply) {
+          addMessage('assistant', data.reply);
         } else {
           addMessage('assistant', 'I received your message but couldn\'t generate a response. Please try again.');
         }
-        // --- CORRECTED SECTION END ---
 
         updateStatus('Message sent', 'connected');
 
