@@ -244,7 +244,7 @@
     // Configuration
     const config = {
       webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inecta-ping',
-      sessionKey: 'inecta_session_id',
+      historyKey: 'inecta_chat_history', // Updated key for history
       retryAttempts: 3,
       retryDelay: 1000
     };
@@ -252,8 +252,7 @@
     // State management
     const state = {
       isTyping: false,
-      messageQueue: [],
-      sessionId: null
+      history: [], // NEW: To store the entire conversation
     };
 
     // DOM elements
@@ -264,22 +263,28 @@
       status: document.getElementById('status')
     };
 
-    // Initialize session
-    function initSession() {
-      const stored = localStorage.getItem(config.sessionKey);
-      if (stored) {
-        state.sessionId = stored;
-        updateStatus('Session restored', 'connected');
-      } else {
-        state.sessionId = generateSessionId();
-        localStorage.setItem(config.sessionKey, state.sessionId);
-        updateStatus('New session created', 'connected');
-      }
+    // NEW: Function to save history to localStorage
+    function saveHistory() {
+      localStorage.setItem(config.historyKey, JSON.stringify(state.history));
     }
 
-    // Generate unique session ID
-    function generateSessionId() {
-      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Initialize session and load history
+    function initSession() {
+      const storedHistory = localStorage.getItem(config.historyKey);
+      if (storedHistory) {
+        state.history = JSON.parse(storedHistory);
+        elements.chat.innerHTML = ''; // Clear chat before repopulating
+        state.history.forEach(message => renderMessage(message.role, message.content, message.isHtml));
+        updateStatus('Session restored', 'connected');
+      } else {
+        // Start a new session with a welcome message
+        const welcomeMessage = { 
+          role: 'assistant', 
+          content: 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?' 
+        };
+        addMessage(welcomeMessage);
+        updateStatus('New session created', 'connected');
+      }
     }
 
     // Update status message
@@ -294,8 +299,8 @@
       }
     }
 
-    // Add message to chat
-    function addMessage(role, content, isHtml = false) {
+    // Renders a message to the UI
+    function renderMessage(role, content, isHtml = false) {
       const row = document.createElement('div');
       row.className = 'row';
       
@@ -311,6 +316,13 @@
       row.appendChild(msg);
       elements.chat.appendChild(row);
       elements.chat.scrollTop = elements.chat.scrollHeight;
+    }
+
+    // Adds a message to history, saves it, and renders it
+    function addMessage(message) {
+      state.history.push(message);
+      saveHistory();
+      renderMessage(message.role, message.content, message.isHtml);
     }
 
     // Show typing indicator
@@ -340,13 +352,12 @@
       }
     }
 
-    // --- CORRECTED sendMessage FUNCTION FOR OPTION 1 ---
-    async function sendMessage(content, attempt = 1) {
+    // Send message with retry logic
+    async function sendMessage() { // No longer needs content passed in
       try {
         const payload = {
-          session_id: state.sessionId,
-          message: content,
-          timestamp: new Date().toISOString()
+          // UPDATED: Send the entire history
+          history: state.history 
         };
 
         const response = await fetch(config.webhookUrl, {
@@ -361,25 +372,17 @@
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // This now correctly receives an object: { "reply": "..." }
-        const data = await response.json(); 
+        const data = await response.json();
         
-        // Update session if provided
-        if (data.session_id && data.session_id !== state.sessionId) {
-          state.sessionId = data.session_id;
-          localStorage.setItem(config.sessionKey, state.sessionId);
-        }
-
-        // Display response
         hideTyping();
-        // This logic now works because data is an object
-        if (data.reply_html) {
-          addMessage('assistant', data.reply_html, true);
-        } else if (data.reply) {
-          addMessage('assistant', data.reply);
-        } else {
-          addMessage('assistant', 'I received your message but couldn\'t generate a response. Please try again.');
-        }
+        const botMessage = {
+            role: 'assistant',
+            content: data.reply || 'I received your message but couldn\'t generate a response. Please try again.',
+            isHtml: !!data.reply_html
+        };
+        if(data.reply_html) botMessage.content = data.reply_html;
+
+        addMessage(botMessage); // Add bot's response to history
 
         updateStatus('Message sent', 'connected');
 
@@ -391,7 +394,7 @@
           updateStatus(`Connection error. Retrying... (${attempt}/${config.retryAttempts})`, 'error');
           setTimeout(() => sendMessage(content, attempt + 1), config.retryDelay * attempt);
         } else {
-          addMessage('assistant', 'I\'m having trouble connecting to the server. Please check your connection and try again.');
+          addMessage({role: 'assistant', content: 'I\'m having trouble connecting to the server. Please check your connection and try again.'});
           updateStatus('Connection failed. Please refresh the page.', 'error');
         }
       }
@@ -402,19 +405,18 @@
       const content = elements.input.value.trim();
       if (!content || state.isTyping) return;
 
-      // Add user message
-      addMessage('user', content);
+      // Add user message to history
+      addMessage({ role: 'user', content: content });
       elements.input.value = '';
       
       // Disable input while processing
       elements.input.disabled = true;
       elements.button.disabled = true;
       
-      // Show typing indicator
       showTyping();
       
-      // Send message
-      await sendMessage(content);
+      // Send the entire history for a response
+      await sendMessage();
       
       // Re-enable input
       elements.input.disabled = false;
@@ -434,7 +436,6 @@
     // Initialize on load
     window.addEventListener('load', () => {
       initSession();
-      addMessage('assistant', 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?');
     });
 
     // Handle page visibility for session management
