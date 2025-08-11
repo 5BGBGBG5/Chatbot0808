@@ -348,15 +348,58 @@
         content: SYSTEM_PROMPT
       }];
       
-      const welcomeMessage = { 
-        role: 'assistant', 
-        content: 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?' 
-      };
-      
-      state.history.push(welcomeMessage);
+      // Don't add the welcome message to history yet
+      // Let the backend generate it based on the system prompt
       saveHistory();
-      renderMessage(welcomeMessage.role, welcomeMessage.content);
+      
+      // Show welcome message in UI but don't save it yet
+      renderMessage('assistant', 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?');
       updateStatus('New session created', 'connected');
+      
+      // Alternatively, trigger an initial message to get a proper welcome from the backend
+      // sendInitialMessage();
+    }
+    
+    // Optional: Send initial message to get welcome from backend
+    async function sendInitialMessage() {
+      showTyping();
+      
+      try {
+        const payload = {
+          messages: [{
+            role: 'system',
+            content: SYSTEM_PROMPT
+          }, {
+            role: 'user',
+            content: 'Hello'
+          }]
+        };
+        
+        const response = await fetch(config.webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          hideTyping();
+          
+          const welcomeMessage = {
+            role: 'assistant',
+            content: data.reply || 'Welcome to Inecta Food ERP! How can I help you today?'
+          };
+          
+          state.history.push(welcomeMessage);
+          saveHistory();
+          renderMessage(welcomeMessage.role, welcomeMessage.content);
+        }
+      } catch (error) {
+        hideTyping();
+        console.error('Initial message error:', error);
+      }
     }
 
     // Update status message
