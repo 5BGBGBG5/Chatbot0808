@@ -314,7 +314,6 @@
         try {
           state.history = JSON.parse(storedHistory);
           
-          // Ensure history starts with system prompt
           if (state.history.length === 0 || state.history[0].role !== 'system') {
             state.history.unshift({
               role: 'system',
@@ -323,7 +322,6 @@
             saveHistory();
           }
           
-          // Render all messages except system
           elements.chat.innerHTML = '';
           state.history.forEach(message => {
             if (message.role !== 'system') {
@@ -334,6 +332,7 @@
           updateStatus('Session restored', 'connected');
         } catch (e) {
           console.error('Error loading history:', e);
+          localStorage.removeItem(config.historyKey);
           startNewSession();
         }
       } else {
@@ -347,59 +346,10 @@
         role: 'system',
         content: SYSTEM_PROMPT
       }];
-      
-      // Don't add the welcome message to history yet
-      // Let the backend generate it based on the system prompt
       saveHistory();
       
-      // Show welcome message in UI but don't save it yet
       renderMessage('assistant', 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?');
       updateStatus('New session created', 'connected');
-      
-      // Alternatively, trigger an initial message to get a proper welcome from the backend
-      // sendInitialMessage();
-    }
-    
-    // Optional: Send initial message to get welcome from backend
-    async function sendInitialMessage() {
-      showTyping();
-      
-      try {
-        const payload = {
-          messages: [{
-            role: 'system',
-            content: SYSTEM_PROMPT
-          }, {
-            role: 'user',
-            content: 'Hello'
-          }]
-        };
-        
-        const response = await fetch(config.webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          hideTyping();
-          
-          const welcomeMessage = {
-            role: 'assistant',
-            content: data.reply || 'Welcome to Inecta Food ERP! How can I help you today?'
-          };
-          
-          state.history.push(welcomeMessage);
-          saveHistory();
-          renderMessage(welcomeMessage.role, welcomeMessage.content);
-        }
-      } catch (error) {
-        hideTyping();
-        console.error('Initial message error:', error);
-      }
     }
 
     // Update status message
@@ -455,15 +405,11 @@
       }
     }
 
-    // Send message with retry logic
+    // Send message with retry logic (CORRECTED FUNCTION)
     async function sendMessage(attempt = 1) {
       try {
-        // Prepare the payload with properly formatted messages
         const payload = {
-          messages: state.history.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+          messages: state.history
         };
 
         const response = await fetch(config.webhookUrl, {
@@ -479,19 +425,22 @@
         }
 
         const data = await response.json();
-        
         hideTyping();
         
-        // Extract the reply from the response
-        const replyContent = data.reply || 'I received your message but couldn\'t generate a response. Please try again.';
+        // Extract the reply text. Provide a fallback for safety.
+        const replyText = data.reply || 'I received your message but couldn\'t generate a response. Please try again.';
         
+        // Create the bot message object ensuring the content is a string
         const botMessage = {
           role: 'assistant',
-          content: replyContent
+          content: String(replyText) // Using String() is a safeguard
         };
         
+        // Add the correctly formatted message to the history
         state.history.push(botMessage);
         saveHistory();
+        
+        // Render the message on the screen
         renderMessage(botMessage.role, botMessage.content);
         
         updateStatus('Message sent', 'connected');
@@ -504,13 +453,8 @@
           updateStatus(`Connection error. Retrying... (${attempt}/${config.retryAttempts})`, 'error');
           setTimeout(() => sendMessage(attempt + 1), config.retryDelay * attempt);
         } else {
-          const errorMessage = {
-            role: 'assistant',
-            content: 'I\'m having trouble connecting to the server. Please check your connection and try again.'
-          };
-          state.history.push(errorMessage);
-          saveHistory();
-          renderMessage(errorMessage.role, errorMessage.content);
+          const errorMessage = 'I\'m having trouble connecting to the server. Please check your connection and try again.';
+          renderMessage('assistant', errorMessage);
           updateStatus('Connection failed. Please try refreshing the page.', 'error');
         }
       }
@@ -521,7 +465,6 @@
       const content = elements.input.value.trim();
       if (!content || state.isTyping) return;
 
-      // Add user message
       const userMessage = { role: 'user', content: content };
       state.history.push(userMessage);
       saveHistory();
@@ -529,16 +472,13 @@
       
       elements.input.value = '';
       
-      // Disable input while processing
       elements.input.disabled = true;
       elements.button.disabled = true;
       
       showTyping();
       
-      // Send message
       await sendMessage();
       
-      // Re-enable input
       elements.input.disabled = false;
       elements.button.disabled = false;
       elements.input.focus();
