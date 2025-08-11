@@ -2,507 +2,86 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Inecta Food ERP - Discovery Chat</title>
+  <title>Simple Chat Test</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #e2e8f0;
-      min-height: 100vh;
-    }
-    
-    .app { 
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 24px;
-      animation: fadeIn 0.5s ease-in;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .header {
-      margin-bottom: 24px;
-      text-align: center;
-    }
-    
-    h1 { 
-      font-size: 2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-    
-    .subtitle {
-      color: #94a3b8;
-      font-size: 0.95rem;
-    }
-    
-    .chat { 
-      background: rgba(11, 18, 32, 0.8);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(30, 41, 59, 0.5);
-      border-radius: 16px;
-      padding: 20px;
-      min-height: 500px;
-      max-height: 500px;
-      overflow-y: auto;
-      scroll-behavior: smooth;
-    }
-    
-    .chat::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .chat::-webkit-scrollbar-track {
-      background: rgba(30, 41, 59, 0.3);
-      border-radius: 3px;
-    }
-    
-    .chat::-webkit-scrollbar-thumb {
-      background: rgba(100, 116, 139, 0.5);
-      border-radius: 3px;
-    }
-    
-    .row { 
-      display: flex;
-      margin-bottom: 16px;
-      animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    .msg { 
-      padding: 12px 16px;
-      border-radius: 12px;
-      max-width: 70%;
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-    
-    .user { 
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 4px;
-    }
-    
-    .bot { 
-      background: rgba(17, 24, 39, 0.8);
-      border: 1px solid rgba(30, 41, 59, 0.5);
-      border-bottom-left-radius: 4px;
-    }
-    
-    .typing {
-      display: inline-block;
-      padding: 12px 16px;
-      background: rgba(17, 24, 39, 0.8);
-      border: 1px solid rgba(30, 41, 59, 0.5);
-      border-radius: 12px;
-      border-bottom-left-radius: 4px;
-    }
-    
-    .typing span {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #60a5fa;
-      margin: 0 2px;
-      animation: bounce 1.4s infinite ease-in-out both;
-    }
-    
-    .typing span:nth-child(1) { animation-delay: -0.32s; }
-    .typing span:nth-child(2) { animation-delay: -0.16s; }
-    
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-      40% { transform: scale(1); opacity: 1; }
-    }
-    
-    .input-area { 
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    
-    input { 
-      flex: 1;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(42, 54, 77, 0.5);
-      background: rgba(11, 18, 32, 0.8);
-      color: #e2e8f0;
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #60a5fa;
-      background: rgba(11, 18, 32, 0.95);
-    }
-    
-    input::placeholder {
-      color: #64748b;
-    }
-    
-    button { 
-      padding: 14px 24px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      color: white;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    button:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-    }
-    
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      animation: shake 0.3s ease-in-out;
-    }
-    
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-    
-    .status {
-      text-align: center;
-      padding: 8px;
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: 12px;
-    }
-    
-    .status.connected { color: #4ade80; }
-    .status.error { color: #f87171; }
-    
-    .clear-history {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .clear-history:hover {
-      background: rgba(239, 68, 68, 0.2);
-      transform: translateY(-1px);
-    }
-    
-    a { 
-      color: #60a5fa;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    
-    a:hover { 
-      color: #93c5fd;
-      text-decoration: underline;
-    }
+    body { font-family: sans-serif; background: #222; color: #eee; padding: 20px; }
+    .chat { border: 1px solid #444; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 10px; }
+    .msg { margin-bottom: 8px; }
+    .user { color: #7af; text-align: right; }
+    .bot { color: #af7; }
+    input { width: calc(100% - 80px); padding: 8px; }
+    button { width: 70px; padding: 8px; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <button class="clear-history" onclick="clearHistory()">Clear History</button>
-    
-    <div class="header">
-      <h1>Inecta Food ERP</h1>
-      <p class="subtitle">Discovery Chat - Let's understand your needs</p>
-    </div>
-    
-    <div id="chat" class="chat"></div>
-    
-    <div class="input-area">
-      <input 
-        id="messageInput" 
-        type="text" 
-        placeholder="Type your message here..." 
-        autofocus 
-        autocomplete="off"
-      />
-      <button id="sendButton">Send</button>
-    </div>
-    
-    <div id="status" class="status"></div>
-  </div>
+  <h1>Simple Chat Test</h1>
+  <div id="chat" class="chat"></div>
+  <input id="messageInput" type="text" placeholder="Type here..." autofocus/>
+  <button id="sendButton">Send</button>
 
   <script>
-    // Configuration
+    // --- CONFIGURATION ---
     const config = {
-      webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inecta-ping',
-      historyKey: 'inecta_chat_history',
-      retryAttempts: 3,
-      retryDelay: 1000
+      // !!! PASTE YOUR NEW N8N WEBHOOK URL HERE !!!
+      webhookUrl: 'https://inecta.app.n8n.cloud/webhook-test/inectaQ'
     };
 
-    // State management
-    const state = {
-      isTyping: false,
-      history: [],
-    };
-
-    // DOM elements
+    // --- DOM ELEMENTS ---
     const elements = {
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
-      button: document.getElementById('sendButton'),
-      status: document.getElementById('status')
+      button: document.getElementById('sendButton')
     };
 
-    // System prompt for the assistant
-    const SYSTEM_PROMPT = `You are a helpful Inecta Food ERP assistant specializing in understanding food business needs. 
-    You help businesses identify their requirements for ERP implementation.
-    Be friendly, professional, and ask clarifying questions to better understand their operations.
-    Focus on understanding their current challenges, business size, types of products, and operational workflows.
-    Respond in a conversational manner and guide them through the discovery process.`;
-
-    // Function to save history to localStorage
-    function saveHistory() {
-      localStorage.setItem(config.historyKey, JSON.stringify(state.history));
-    }
-
-    // Clear history function
-    function clearHistory() {
-      if (confirm('Are you sure you want to clear the conversation history?')) {
-        localStorage.removeItem(config.historyKey);
-        state.history = [];
-        elements.chat.innerHTML = '';
-        initSession();
-      }
-    }
-
-    // Initialize session and load history
-    function initSession() {
-      const storedHistory = localStorage.getItem(config.historyKey);
-      
-      if (storedHistory) {
-        try {
-          state.history = JSON.parse(storedHistory);
-          
-          if (state.history.length === 0 || state.history[0].role !== 'system') {
-            state.history.unshift({
-              role: 'system',
-              content: SYSTEM_PROMPT
-            });
-            saveHistory();
-          }
-          
-          elements.chat.innerHTML = '';
-          state.history.forEach(message => {
-            if (message.role !== 'system') {
-              renderMessage(message.role, message.content);
-            }
-          });
-          
-          updateStatus('Session restored', 'connected');
-        } catch (e) {
-          console.error('Error loading history:', e);
-          localStorage.removeItem(config.historyKey);
-          startNewSession();
-        }
-      } else {
-        startNewSession();
-      }
-    }
-
-    // Start a new session
-    function startNewSession() {
-      state.history = [{
-        role: 'system',
-        content: SYSTEM_PROMPT
-      }];
-      saveHistory();
-      
-      renderMessage('assistant', 'Welcome to Inecta Food ERP! I\'m here to help understand your business needs. Could you start by telling me your company name and what type of food business you operate?');
-      updateStatus('New session created', 'connected');
-    }
-
-    // Update status message
-    function updateStatus(message, type = '') {
-      elements.status.textContent = message;
-      elements.status.className = 'status ' + type;
-      if (type !== 'error') {
-        setTimeout(() => {
-          elements.status.textContent = '';
-          elements.status.className = 'status';
-        }, 3000);
-      }
-    }
-
-    // Render a message to the UI
+    // --- RENDER A MESSAGE ---
     function renderMessage(role, content) {
-      const row = document.createElement('div');
-      row.className = 'row';
-      
-      const msg = document.createElement('div');
-      msg.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
-      msg.textContent = content;
-      
-      row.appendChild(msg);
-      elements.chat.appendChild(row);
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg ' + role;
+      msgDiv.textContent = `[${role}]: ${content}`;
+      elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
     }
 
-    // Show typing indicator
-    function showTyping() {
-      if (state.isTyping) return;
-      state.isTyping = true;
-      
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.id = 'typing-indicator';
-      
-      const typing = document.createElement('div');
-      typing.className = 'typing';
-      typing.innerHTML = '<span></span><span></span><span></span>';
-      
-      row.appendChild(typing);
-      elements.chat.appendChild(row);
-      elements.chat.scrollTop = elements.chat.scrollHeight;
-    }
+    // --- SEND MESSAGE ---
+    async function handleSend() {
+      const userContent = elements.input.value.trim();
+      if (!userContent) return;
 
-    // Hide typing indicator
-    function hideTyping() {
-      state.isTyping = false;
-      const indicator = document.getElementById('typing-indicator');
-      if (indicator) {
-        indicator.remove();
-      }
-    }
+      renderMessage('user', userContent);
+      elements.input.value = '';
+      elements.button.disabled = true;
 
-    // Send message with retry logic (CORRECTED FUNCTION)
-    async function sendMessage(attempt = 1) {
       try {
         const payload = {
-          messages: state.history
+          message: userContent
         };
 
         const response = await fetch(config.webhookUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP Error: ${response.status}`);
         }
 
         const data = await response.json();
-        hideTyping();
-        
-        // Extract the reply text. Provide a fallback for safety.
-        const replyText = data.reply || 'I received your message but couldn\'t generate a response. Please try again.';
-        
-        // Create the bot message object ensuring the content is a string
-        const botMessage = {
-          role: 'assistant',
-          content: String(replyText) // Using String() is a safeguard
-        };
-        
-        // Add the correctly formatted message to the history
-        state.history.push(botMessage);
-        saveHistory();
-        
-        // Render the message on the screen
-        renderMessage(botMessage.role, botMessage.content);
-        
-        updateStatus('Message sent', 'connected');
+        renderMessage('bot', data.reply);
 
       } catch (error) {
-        console.error('Send error:', error);
-        hideTyping();
-        
-        if (attempt < config.retryAttempts) {
-          updateStatus(`Connection error. Retrying... (${attempt}/${config.retryAttempts})`, 'error');
-          setTimeout(() => sendMessage(attempt + 1), config.retryDelay * attempt);
-        } else {
-          const errorMessage = 'I\'m having trouble connecting to the server. Please check your connection and try again.';
-          renderMessage('assistant', errorMessage);
-          updateStatus('Connection failed. Please try refreshing the page.', 'error');
-        }
+        console.error('Fetch error:', error);
+        renderMessage('bot', 'Error connecting to the backend.');
       }
-    }
 
-    // Handle send button click
-    async function handleSend() {
-      const content = elements.input.value.trim();
-      if (!content || state.isTyping) return;
-
-      const userMessage = { role: 'user', content: content };
-      state.history.push(userMessage);
-      saveHistory();
-      renderMessage(userMessage.role, userMessage.content);
-      
-      elements.input.value = '';
-      
-      elements.input.disabled = true;
-      elements.button.disabled = true;
-      
-      showTyping();
-      
-      await sendMessage();
-      
-      elements.input.disabled = false;
       elements.button.disabled = false;
       elements.input.focus();
     }
 
-    // Event listeners
+    // --- EVENT LISTENERS ---
     elements.button.addEventListener('click', handleSend);
     elements.input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
-      }
-    });
-
-    // Initialize on load
-    window.addEventListener('load', () => {
-      initSession();
-    });
-
-    // Handle page visibility for session management
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        updateStatus('Session active', 'connected');
-      }
+      if (e.key === 'Enter') handleSend();
     });
   </script>
 </body>
