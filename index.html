@@ -369,15 +369,22 @@
           localStorage.setItem(config.sessionKey, state.sessionId);
         }
 
+        // --- CORRECTED SECTION START ---
+        // Get the first object from the response array.
+        const responsePayload = data[0];
+
         // Display response
         hideTyping();
-        if (data.reply_html) {
-          addMessage('assistant', data.reply_html, true);
-        } else if (data.reply) {
-          addMessage('assistant', data.reply);
+
+        // Check the payload object for the reply keys
+        if (responsePayload && responsePayload.reply_html) {
+          addMessage('assistant', responsePayload.reply_html, true);
+        } else if (responsePayload && responsePayload.reply) {
+          addMessage('assistant', responsePayload.reply);
         } else {
           addMessage('assistant', 'I received your message but couldn\'t generate a response. Please try again.');
         }
+        // --- CORRECTED SECTION END ---
 
         updateStatus('Message sent', 'connected');
 
