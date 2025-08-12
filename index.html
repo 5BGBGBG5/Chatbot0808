@@ -12,12 +12,25 @@
     input { width: calc(100% - 80px); padding: 8px; }
     button { width: 70px; padding: 8px; }
 
-    /* --- CSS FOR TOPIC TRACKER --- */
+    /* --- UPDATED CSS FOR TOPIC TRACKER --- */
     .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
     .topic-item { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; transition: all 0.3s ease; }
     .status-not-started { background-color: #444; color: #999; }
-    .status-in-progress { background-color: #af7; color: #222; }
     .status-completed { background-color: #36a; color: #eee; }
+    
+    /* New pulsing animation for the 'In Progress' topic */
+    .status-in-progress { 
+      background-color: #af7; 
+      color: #222;
+      animation: pulse-green 2s infinite;
+      box-shadow: 0 0 0 0 rgba(170, 255, 119, 0.7);
+    }
+    
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(170, 255, 119, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(170, 255, 119, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(170, 255, 119, 0); }
+    }
   </style>
 </head>
 <body>
@@ -46,21 +59,27 @@
 
     let chatHistory = [];
 
-    // --- Function to render the topic tracker ---
+    // --- MODIFIED: Function to render the topic tracker with icons ---
     function updateTopicTracker(topics = []) {
         elements.topicTracker.innerHTML = ''; // Clear existing topics
         topics.forEach(topic => {
             const topicDiv = document.createElement('div');
             topicDiv.className = 'topic-item';
             topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
-            topicDiv.textContent = topic.name;
+            
+            // Add a checkmark for completed topics
+            if (topic.status === 'Completed') {
+              topicDiv.textContent = '✓ ' + topic.name;
+            } else {
+              topicDiv.textContent = topic.name;
+            }
+            
             elements.topicTracker.appendChild(topicDiv);
         });
     }
 
     // --- RENDER A MESSAGE ---
     function renderMessage(role, content, save = true) {
-      // Hide the topic tag from the user before rendering
       const topicTagRegex = /\[topic:\s*\w+\]\n*/;
       const displayContent = content.replace(topicTagRegex, '').trim();
 
@@ -71,7 +90,6 @@
       elements.chat.scrollTop = elements.chat.scrollHeight;
 
       if (save) {
-        // Save the ORIGINAL content (with the tag) to history so the bot has context
         chatHistory.push({ role, content });
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
@@ -113,7 +131,6 @@
         const data = await response.json();
         renderMessage('bot', data.reply);
 
-        // Use the updateTopicTracker function
         if (data.topics) {
           updateTopicTracker(data.topics);
         }
@@ -133,7 +150,6 @@
       if (e.key === 'Enter') handleSend();
     });
 
-    // --- THIS IS THE FIX ---
     // Load chat history and show intro if needed
     loadAndRenderHistory();
   </script>
