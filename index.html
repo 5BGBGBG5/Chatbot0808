@@ -48,7 +48,7 @@
       }
     }
 
-   // --- RENDER A MESSAGE ---
+    // --- RENDER A MESSAGE ---
     function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg ' + role;
@@ -63,7 +63,7 @@
       }
     }
 
-// --- SEND MESSAGE ---
+    // --- SEND MESSAGE ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -75,7 +75,7 @@
       try {
         // Send the ENTIRE chat history in the payload
         const payload = {
-          history: chatHistory 
+          history: chatHistory
         };
 
         const response = await fetch(config.webhookUrl, {
@@ -105,6 +105,7 @@
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
+
     // Load chat history when the page loads
     loadAndRenderHistory();
   </script>
