@@ -48,13 +48,19 @@
       }
     }
 
-    // --- RENDER A MESSAGE ---
-    function renderMessage(role, content) {
+   // --- RENDER A MESSAGE ---
+    function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg ' + role;
       msgDiv.textContent = `[${role}]: ${content}`;
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
+
+      // Add to history and save to localStorage
+      if (save) {
+        chatHistory.push({ role, content });
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+      }
     }
 
     // --- SEND MESSAGE ---
