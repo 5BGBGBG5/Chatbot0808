@@ -58,7 +58,7 @@
         });
     }
 
-    // --- RENDER A MESSAGE (Restored) ---
+    // --- RENDER A MESSAGE ---
     function renderMessage(role, content, save = true) {
       // Hide the topic tag from the user before rendering
       const topicTagRegex = /\[topic:\s*\w+\]\n*/;
@@ -77,7 +77,7 @@
       }
     }
     
-    // --- LOAD HISTORY & DISPLAY INTRO (Restored) ---
+    // --- LOAD HISTORY & DISPLAY INTRO ---
     function loadAndRenderHistory() {
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
@@ -133,5 +133,9 @@
       if (e.key === 'Enter') handleSend();
     });
 
+    // --- THIS IS THE FIX ---
     // Load chat history and show intro if needed
-    loadAndRende
+    loadAndRenderHistory();
+  </script>
+</body>
+</html>
