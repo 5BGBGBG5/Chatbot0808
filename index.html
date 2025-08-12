@@ -15,10 +15,6 @@
 </head>
 <body>
   <h1>Simple Chat Test</h1>
-<div id="progressBarContainer" style="width: 100%; background-color: #444; border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
-  <div id="progressBar" style="width: 0%; height: 20px; background-color: #af7; text-align: center; line-height: 20px; color: #222; font-weight: bold; transition: width 0.5s ease-in-out;">0%</div>
-</div>
-<div id="chat" class="chat"></div>
   <div id="chat" class="chat"></div>
   <input id="messageInput" type="text" placeholder="Type here..." autofocus/>
   <button id="sendButton">Send</button>
@@ -26,9 +22,11 @@
   <script>
     // --- CONFIGURATION ---
     const config = {
-      // !!! PASTE YOUR NEW N8N WEBHOOK URL HERE !!!
       webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ'
     };
+
+    // --- NEW: PRE-DEFINED INTRO MESSAGE ---
+    const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
 
     // --- DOM ELEMENTS ---
     const elements = {
@@ -40,15 +38,20 @@
     // --- CHAT HISTORY ---
     let chatHistory = [];
 
-    // --- LOAD HISTORY & RENDER CHAT ---
+    // --- MODIFIED: LOAD HISTORY & DISPLAY INTRO ---
     function loadAndRenderHistory() {
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
         chatHistory.forEach(msg => {
-          // Just render, don't save again
-          renderMessage(msg.role, msg.content, false);
+          renderMessage(msg.role, msg.content, false); // Just render, don't save again
         });
+      }
+      
+      // If after loading, the history is still empty, it's a new chat.
+      // Display the introductory message.
+      if (chatHistory.length === 0) {
+        renderMessage('bot', INTRO_MESSAGE, true); // Display and save intro to history
       }
     }
 
@@ -60,14 +63,13 @@
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
 
-      // Add to history and save to localStorage
       if (save) {
         chatHistory.push({ role, content });
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
     }
 
-  // --- SEND MESSAGE ---
+    // --- SEND MESSAGE ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -77,9 +79,8 @@
       elements.button.disabled = true;
 
       try {
-        // Send the ENTIRE chat history in the payload
         const payload = {
-          history: chatHistory 
+          history: chatHistory
         };
 
         const response = await fetch(config.webhookUrl, {
@@ -103,13 +104,14 @@
       elements.button.disabled = false;
       elements.input.focus();
     }
+
     // --- EVENT LISTENERS ---
     elements.button.addEventListener('click', handleSend);
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
 
-    // Load chat history when the page loads
+    // Load chat history (and show intro if needed) when the page loads
     loadAndRenderHistory();
   </script>
 </body>
