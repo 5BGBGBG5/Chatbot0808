@@ -12,20 +12,13 @@
     input { width: calc(100% - 80px); padding: 8px; }
     button { width: 70px; padding: 8px; }
 
-    /* --- UPDATED CSS FOR TOPIC TRACKER --- */
+    /* --- CSS FOR TOPIC TRACKER --- */
     .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
     .topic-item { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; transition: all 0.3s ease; }
     .status-not-started { background-color: #444; color: #999; }
+    .status-in-progress { background-color: #af7; color: #222; animation: pulse-green 2s infinite; }
     .status-completed { background-color: #36a; color: #eee; }
-    
-    /* New pulsing animation for the 'In Progress' topic */
-    .status-in-progress { 
-      background-color: #af7; 
-      color: #222;
-      animation: pulse-green 2s infinite;
-      box-shadow: 0 0 0 0 rgba(170, 255, 119, 0.7);
-    }
-    
+
     @keyframes pulse-green {
       0% { box-shadow: 0 0 0 0 rgba(170, 255, 119, 0.7); }
       70% { box-shadow: 0 0 0 10px rgba(170, 255, 119, 0); }
@@ -43,81 +36,62 @@
   <button id="sendButton">Send</button>
 
   <script>
-    // --- CONFIGURATION ---
-    const config = {
-      webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ' // Make sure this is your webhook URL
-    };
+    const config = { webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ' };
     const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
-
-    // --- DOM ELEMENTS ---
     const elements = {
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
       button: document.getElementById('sendButton'),
       topicTracker: document.getElementById('topicTracker')
     };
-
     let chatHistory = [];
 
-    // --- MODIFIED: Function to render the topic tracker with icons ---
     function updateTopicTracker(topics = []) {
-        elements.topicTracker.innerHTML = ''; // Clear existing topics
-        topics.forEach(topic => {
-            const topicDiv = document.createElement('div');
-            topicDiv.className = 'topic-item';
-            topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
-            
-            // Add a checkmark for completed topics
-            if (topic.status === 'Completed') {
-              topicDiv.textContent = '✓ ' + topic.name;
-            } else {
-              topicDiv.textContent = topic.name;
-            }
-            
-            elements.topicTracker.appendChild(topicDiv);
-        });
+      elements.topicTracker.innerHTML = '';
+      topics.forEach(topic => {
+        const topicDiv = document.createElement('div');
+        topicDiv.className = 'topic-item';
+        topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
+        if (topic.status === 'Completed') {
+          topicDiv.textContent = '✓ ' + topic.name;
+        } else {
+          topicDiv.textContent = topic.name;
+        }
+        elements.topicTracker.appendChild(topicDiv);
+      });
     }
 
-    // --- RENDER A MESSAGE ---
     function renderMessage(role, content, save = true) {
       const topicTagRegex = /\[topic:\s*\w+\]\n*/;
       const displayContent = content.replace(topicTagRegex, '').trim();
-
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg ' + role;
       msgDiv.textContent = `[${role}]: ${displayContent}`;
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
-
       if (save) {
         chatHistory.push({ role, content });
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
     }
     
-    // --- LOAD HISTORY & DISPLAY INTRO ---
     function loadAndRenderHistory() {
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
-        chatHistory.forEach(msg => {
-          renderMessage(msg.role, msg.content, false);
-        });
+        chatHistory.forEach(msg => { renderMessage(msg.role, msg.content, false); });
       }
-      
       if (chatHistory.length === 0) {
         renderMessage('bot', INTRO_MESSAGE, true);
       }
     }
 
-    // --- SEND MESSAGE ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
       renderMessage('user', userContent);
       elements.input.value = '';
       elements.button.disabled = true;
-
       try {
         const payload = { history: chatHistory };
         const response = await fetch(config.webhookUrl, {
@@ -125,32 +99,24 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        
         const data = await response.json();
         renderMessage('bot', data.reply);
-
         if (data.topics) {
           updateTopicTracker(data.topics);
         }
-
       } catch (error) {
         console.error('Fetch error:', error);
         renderMessage('bot', 'Error connecting to the backend.');
       }
-
       elements.button.disabled = false;
       elements.input.focus();
     }
 
-    // --- EVENT LISTENERS ---
     elements.button.addEventListener('click', handleSend);
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
-
-    // Load chat history and show intro if needed
     loadAndRenderHistory();
   </script>
 </body>
