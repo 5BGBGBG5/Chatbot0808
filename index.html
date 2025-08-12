@@ -15,6 +15,9 @@
 </head>
 <body>
   <h1>Simple Chat Test</h1>
+  <div id="progressBarContainer" style="width: 100%; background-color: #444; border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
+  <div id="progressBar" style="width: 0%; height: 20px; background-color: #af7; text-align: center; line-height: 20px; color: #222; font-weight: bold; transition: width 0.5s ease-in-out;">0%</div>
+</div>
   <div id="chat" class="chat"></div>
   <input id="messageInput" type="text" placeholder="Type here..." autofocus/>
   <button id="sendButton">Send</button>
@@ -24,52 +27,54 @@
     const config = {
       webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ'
     };
-
-    // --- NEW: PRE-DEFINED INTRO MESSAGE ---
     const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
 
     // --- DOM ELEMENTS ---
     const elements = {
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
-      button: document.getElementById('sendButton')
+      button: document.getElementById('sendButton'),
+      progressBar: document.getElementById('progressBar') // Add progress bar element
     };
 
     // --- CHAT HISTORY ---
     let chatHistory = [];
 
-    // --- MODIFIED: LOAD HISTORY & DISPLAY INTRO ---
+    // --- LOAD HISTORY & DISPLAY INTRO ---
     function loadAndRenderHistory() {
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
         chatHistory.forEach(msg => {
-          renderMessage(msg.role, msg.content, false); // Just render, don't save again
+          renderMessage(msg.role, msg.content, false);
         });
       }
-      
-      // If after loading, the history is still empty, it's a new chat.
-      // Display the introductory message.
       if (chatHistory.length === 0) {
-        renderMessage('bot', INTRO_MESSAGE, true); // Display and save intro to history
+        renderMessage('bot', INTRO_MESSAGE, true);
       }
     }
 
-    // --- RENDER A MESSAGE ---
+    // --- RENDER A MESSAGE (MODIFIED) ---
     function renderMessage(role, content, save = true) {
+      // --- NEW: Hide the topic tag from the user ---
+      const topicTagRegex = /\[topic:\s*\w+\]\n*/;
+      const displayContent = content.replace(topicTagRegex, '').trim();
+      // --- END NEW ---
+
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg ' + role;
-      msgDiv.textContent = `[${role}]: ${content}`;
+      msgDiv.textContent = `[${role}]: ${displayContent}`;
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
 
       if (save) {
+        // Save the ORIGINAL content with the tag to history
         chatHistory.push({ role, content });
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
     }
 
-    // --- SEND MESSAGE ---
+    // --- SEND MESSAGE (MODIFIED) ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -96,6 +101,13 @@
         const data = await response.json();
         renderMessage('bot', data.reply);
 
+        // --- NEW: Update the progress bar ---
+        if (data.progress !== undefined) {
+          elements.progressBar.style.width = data.progress + '%';
+          elements.progressBar.textContent = data.progress + '%';
+        }
+        // --- END NEW ---
+
       } catch (error) {
         console.error('Fetch error:', error);
         renderMessage('bot', 'Error connecting to the backend.');
@@ -111,8 +123,8 @@
       if (e.key === 'Enter') handleSend();
     });
 
-    // Load chat history (and show intro if needed) when the page loads
+    // Load chat history (and show intro if needed)
     loadAndRenderHistory();
-  </script>
+</script>
 </body>
 </html>
