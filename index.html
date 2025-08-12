@@ -12,7 +12,7 @@
     input { width: calc(100% - 80px); padding: 8px; }
     button { width: 70px; padding: 8px; }
 
-    /* --- NEW CSS FOR TOPIC TRACKER --- */
+    /* --- CSS FOR TOPIC TRACKER --- */
     .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
     .topic-item { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; transition: all 0.3s ease; }
     .status-not-started { background-color: #444; color: #999; }
@@ -32,7 +32,7 @@
   <script>
     // --- CONFIGURATION ---
     const config = {
-      webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ'
+      webhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ' // Make sure this is your webhook URL
     };
     const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
 
@@ -41,12 +41,12 @@
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
       button: document.getElementById('sendButton'),
-      topicTracker: document.getElementById('topicTracker') // New tracker element
+      topicTracker: document.getElementById('topicTracker')
     };
 
     let chatHistory = [];
 
-    // --- NEW: Function to render the topic tracker ---
+    // --- Function to render the topic tracker ---
     function updateTopicTracker(topics = []) {
         elements.topicTracker.innerHTML = ''; // Clear existing topics
         topics.forEach(topic => {
@@ -58,15 +58,41 @@
         });
     }
 
-    function loadAndRenderHistory() {
-      // This function remains the same
-    }
-
+    // --- RENDER A MESSAGE (Restored) ---
     function renderMessage(role, content, save = true) {
-      // This function remains the same
+      // Hide the topic tag from the user before rendering
+      const topicTagRegex = /\[topic:\s*\w+\]\n*/;
+      const displayContent = content.replace(topicTagRegex, '').trim();
+
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg ' + role;
+      msgDiv.textContent = `[${role}]: ${displayContent}`;
+      elements.chat.appendChild(msgDiv);
+      elements.chat.scrollTop = elements.chat.scrollHeight;
+
+      if (save) {
+        // Save the ORIGINAL content (with the tag) to history so the bot has context
+        chatHistory.push({ role, content });
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+      }
+    }
+    
+    // --- LOAD HISTORY & DISPLAY INTRO (Restored) ---
+    function loadAndRenderHistory() {
+      const savedHistory = localStorage.getItem('chatHistory');
+      if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory);
+        chatHistory.forEach(msg => {
+          renderMessage(msg.role, msg.content, false);
+        });
+      }
+      
+      if (chatHistory.length === 0) {
+        renderMessage('bot', INTRO_MESSAGE, true);
+      }
     }
 
-    // --- MODIFIED: SEND MESSAGE ---
+    // --- SEND MESSAGE ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -87,7 +113,7 @@
         const data = await response.json();
         renderMessage('bot', data.reply);
 
-        // --- Use the new updateTopicTracker function ---
+        // Use the updateTopicTracker function
         if (data.topics) {
           updateTopicTracker(data.topics);
         }
@@ -101,12 +127,11 @@
       elements.input.focus();
     }
 
-    // Event listeners and initial call remain the same
+    // --- EVENT LISTENERS ---
     elements.button.addEventListener('click', handleSend);
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
-    loadAndRenderHistory();
-  </script>
-</body>
-</html>
+
+    // Load chat history and show intro if needed
+    loadAndRende
