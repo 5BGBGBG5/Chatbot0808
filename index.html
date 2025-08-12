@@ -63,7 +63,7 @@
       }
     }
 
-    // --- SEND MESSAGE ---
+// --- SEND MESSAGE ---
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -73,8 +73,9 @@
       elements.button.disabled = true;
 
       try {
+        // Send the ENTIRE chat history in the payload
         const payload = {
-          message: userContent
+          history: chatHistory 
         };
 
         const response = await fetch(config.webhookUrl, {
