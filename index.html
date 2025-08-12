@@ -105,6 +105,8 @@
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
+    // Load chat history when the page loads
+    loadAndRenderHistory();
   </script>
 </body>
 </html>
