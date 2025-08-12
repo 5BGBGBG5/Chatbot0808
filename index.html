@@ -33,6 +33,21 @@
       button: document.getElementById('sendButton')
     };
 
+    // --- CHAT HISTORY ---
+    let chatHistory = [];
+
+    // --- LOAD HISTORY & RENDER CHAT ---
+    function loadAndRenderHistory() {
+      const savedHistory = localStorage.getItem('chatHistory');
+      if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory);
+        chatHistory.forEach(msg => {
+          // Just render, don't save again
+          renderMessage(msg.role, msg.content, false);
+        });
+      }
+    }
+
     // --- RENDER A MESSAGE ---
     function renderMessage(role, content) {
       const msgDiv = document.createElement('div');
