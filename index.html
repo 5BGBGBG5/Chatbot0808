@@ -4,12 +4,33 @@
   <meta charset="utf-8" />
   <title>Simple Chat Test</title>
   <style>
-    /* ... All your existing CSS remains here ... */
+    body { font-family: sans-serif; background: #222; color: #eee; padding: 20px; }
+    .chat { border: 1px solid #444; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 10px; }
+    .msg { margin-bottom: 8px; }
+    .user { color: #7af; text-align: right; }
+    .bot { color: #af7; }
+    input { width: calc(100% - 160px); padding: 8px; } /* Adjusted width for two buttons */
+    button { width: 70px; padding: 8px; }
+
+    /* --- CSS FOR TOPIC TRACKER --- */
+    .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .topic-item { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; transition: all 0.3s ease; }
+    .status-not-started { background-color: #444; color: #999; }
+    .status-in-progress { background-color: #af7; color: #222; animation: pulse-green 2s infinite; }
+    .status-completed { background-color: #36a; color: #eee; }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(170, 255, 119, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(170, 255, 119, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(170, 255, 119, 0); }
+    }
   </style>
 </head>
 <body>
   <h1>Simple Chat Test</h1>
+
   <div id="topicTracker" class="topic-tracker"></div>
+
   <div id="chat" class="chat"></div>
 
   <input id="messageInput" type="text" placeholder="Type here..." autofocus/>
@@ -17,27 +38,108 @@
   <button id="pdfButton" style="width: auto; padding: 8px; float: right;">Download PDF</button>
 
   <script>
+    // --- CONFIGURATION ---
     const config = {
-      chatWebhookUrl: 'YOUR_CHAT_WEBHOOK_URL',
-      pdfWebhookUrl: 'YOUR_NEW_PDF_WEBHOOK_URL' // Create this new webhook in n8n
+      // !!! PASTE YOUR CHAT WEBHOOK URL HERE !!!
+      chatWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ', 
+      // !!! PASTE YOUR NEW PDF WEBHOOK URL HERE !!!
+      pdfWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/generate-pdf' 
     };
-    // ... all existing JS variables and functions (INTRO_MESSAGE, elements, chatHistory, etc.)
+    const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
 
-    // --- NEW: Function to handle PDF Download ---
+    // --- DOM ELEMENTS ---
+    const elements = {
+      chat: document.getElementById('chat'),
+      input: document.getElementById('messageInput'),
+      sendButton: document.getElementById('sendButton'),
+      pdfButton: document.getElementById('pdfButton'),
+      topicTracker: document.getElementById('topicTracker')
+    };
+
+    let chatHistory = [];
+
+    // --- Function to render the topic tracker ---
+    function updateTopicTracker(topics = []) {
+        elements.topicTracker.innerHTML = '';
+        topics.forEach(topic => {
+            const topicDiv = document.createElement('div');
+            topicDiv.className = 'topic-item';
+            topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
+            if (topic.status === 'Completed') {
+              topicDiv.textContent = '✓ ' + topic.name;
+            } else {
+              topicDiv.textContent = topic.name;
+            }
+            elements.topicTracker.appendChild(topicDiv);
+        });
+    }
+
+    // --- RENDER A MESSAGE ---
+    function renderMessage(role, content, save = true) {
+      const topicTagRegex = /\[topic:\s*\w+\]\n*/;
+      const displayContent = content.replace(topicTagRegex, '').trim();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg ' + role;
+      msgDiv.textContent = `[${role}]: ${displayContent}`;
+      elements.chat.appendChild(msgDiv);
+      elements.chat.scrollTop = elements.chat.scrollHeight;
+      if (save) {
+        chatHistory.push({ role, content });
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+      }
+    }
+    
+    // --- LOAD HISTORY & DISPLAY INTRO ---
+    function loadAndRenderHistory() {
+      const savedHistory = localStorage.getItem('chatHistory');
+      if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory);
+        chatHistory.forEach(msg => { renderMessage(msg.role, msg.content, false); });
+      }
+      if (chatHistory.length === 0) {
+        renderMessage('bot', INTRO_MESSAGE, true);
+      }
+    }
+
+    // --- SEND CHAT MESSAGE ---
+    async function handleSend() {
+      const userContent = elements.input.value.trim();
+      if (!userContent) return;
+      renderMessage('user', userContent);
+      elements.input.value = '';
+      elements.sendButton.disabled = true;
+      try {
+        const payload = { history: chatHistory };
+        const response = await fetch(config.chatWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        const data = await response.json();
+        renderMessage('bot', data.reply);
+        if (data.topics) {
+          updateTopicTracker(data.topics);
+        }
+      } catch (error) {
+        console.error('Chat Fetch error:', error);
+        renderMessage('bot', 'Error connecting to the backend.');
+      }
+      elements.sendButton.disabled = false;
+      elements.input.focus();
+    }
+
+    // --- HANDLE PDF DOWNLOAD ---
     async function handleDownloadPdf() {
-      const pdfButton = document.getElementById('pdfButton');
-      pdfButton.disabled = true;
-      pdfButton.textContent = 'Generating...';
-
+      elements.pdfButton.disabled = true;
+      elements.pdfButton.textContent = 'Generating...';
       try {
         const response = await fetch(config.pdfWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ history: chatHistory })
         });
-
-        if (!response.ok) throw new Error(`PDF Generation Error: ${response.status}`);
-
+        if (!response.ok) throw new Error(`PDF Generation Error: ${response.statusText}`);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -47,21 +149,22 @@
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        
+        a.remove();
       } catch (error) {
         console.error('PDF Fetch error:', error);
-        alert('Could not generate PDF report.');
+        alert('Could not generate the PDF report.');
       }
-
-      pdfButton.disabled = false;
-      pdfButton.textContent = 'Download PDF';
+      elements.pdfButton.disabled = false;
+      elements.pdfButton.textContent = 'Download PDF';
     }
 
-    // --- Existing handleSend, renderMessage, etc. functions go here ---
+    // --- EVENT LISTENERS ---
+    elements.sendButton.addEventListener('click', handleSend);
+    elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+    elements.pdfButton.addEventListener('click', handleDownloadPdf);
 
-    // --- Add New Event Listener ---
-    document.getElementById('pdfButton').addEventListener('click', handleDownloadPdf);
-    // ... your other event listeners
+    // --- INITIALIZE ---
+    loadAndRenderHistory();
   </script>
 </body>
 </html>
