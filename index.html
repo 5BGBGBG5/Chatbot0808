@@ -75,6 +75,27 @@
     }
     .user { color: #81d4fa; text-align: right; margin-left: auto; }
     .bot { color: #c5e1a5; text-align: left; }
+    
+    /* --- NEW: Button Container in Chat --- */
+    .options-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: flex-start;
+    }
+    .option-button {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #4db8ff;
+      background: transparent;
+      color: #4db8ff;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .option-button:hover {
+      background-color: #4db8ff;
+      color: #1e1e1e;
+    }
 
     /* --- Input Area --- */
     .input-area {
@@ -122,7 +143,6 @@
   <script>
     // --- CONFIGURATION ---
     const config = {
-      // !!! IMPORTANT: PASTE YOUR N8N CHAT WEBHOOK URL HERE !!!
       chatWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ',
       reportWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/generate-pdf'
     };
@@ -174,6 +194,32 @@
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
     }
+
+    /**
+     * --- NEW FUNCTION ---
+     * Renders clickable option buttons in the chat.
+     * @param {Array<string>} options - An array of strings for the button labels.
+     */
+    function renderOptions(options) {
+      const container = document.createElement('div');
+      container.className = 'options-container';
+
+      options.forEach(optionText => {
+        const button = document.createElement('button');
+        button.className = 'option-button';
+        button.textContent = optionText;
+        button.onclick = () => {
+          // When a button is clicked, send its text as a user message
+          handleSend(optionText);
+          // Remove the buttons after one is clicked
+          container.remove();
+        };
+        container.appendChild(button);
+      });
+
+      elements.chat.appendChild(container);
+      elements.chat.scrollTop = elements.chat.scrollHeight;
+    }
     
     /**
      * Loads chat history from localStorage and renders it.
@@ -191,14 +237,16 @@
 
     /**
      * Handles sending a message to the backend and processing the response.
+     * @param {string} [prefilledContent] - Optional content from a button click.
      */
-    async function handleSend() {
-      const userContent = elements.input.value.trim();
+    async function handleSend(prefilledContent = null) {
+      const userContent = prefilledContent || elements.input.value.trim();
       if (!userContent) return;
 
       renderMessage('user', userContent);
       elements.input.value = '';
       elements.sendButton.disabled = true;
+      elements.input.disabled = true; // Disable input while waiting
 
       try {
         const payload = { history: chatHistory };
@@ -212,7 +260,6 @@
           throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
         }
         
-        // The backend sends a clean JSON object, so we parse it directly.
         const responseData = await response.json(); 
 
         renderMessage('bot', responseData.reply);
@@ -221,7 +268,11 @@
           updateTopicTracker(responseData.topics);
         }
 
-        // Conditionally show the report button if discovery is complete.
+        // --- NEW: Check for and render options ---
+        if (responseData.options && responseData.options.length > 0) {
+          renderOptions(responseData.options);
+        }
+
         if (responseData.isDiscoveryComplete === true) {
           elements.reportButton.style.display = 'inline-block';
         }
@@ -231,12 +282,13 @@
         renderMessage('bot', 'Sorry, there was an error connecting to the backend. Please try again.');
       } finally {
         elements.sendButton.disabled = false;
+        elements.input.disabled = false; // Re-enable input
         elements.input.focus();
       }
     }
 
     /**
-     * Handles the "View Report" button click to generate and display the report.
+     * Handles the "View Report" button click.
      */
     async function handleViewReport() {
       elements.reportButton.disabled = true;
@@ -268,7 +320,7 @@
     }
 
     // --- EVENT LISTENERS ---
-    elements.sendButton.addEventListener('click', handleSend);
+    elements.sendButton.addEventListener('click', () => handleSend());
     elements.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         handleSend();
