@@ -111,10 +111,12 @@
           body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        const data = await response.json();
-
-        // The data from the backend is an array, so we access the first element's json property
-        const responseData = data[0].json; 
+        
+        // --- FIX ---
+        // The data from the backend is an array, so we access the first element
+        const responseArray = await response.json();
+        // Then we access the 'json' property of that first element
+        const responseData = responseArray[0].json; 
 
         renderMessage('bot', responseData.reply);
         if (responseData.topics) {
