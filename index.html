@@ -113,23 +113,20 @@
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         
         // --- FIX ---
-        // The data from the backend is an array, so we access the first element
-        const responseArray = await response.json();
-        // Then we access the 'json' property of that first element
-        const responseData = responseArray[0].json; 
+        // The backend now sends a clean JSON object, so we can parse it directly.
+        const responseData = await response.json(); 
 
         renderMessage('bot', responseData.reply);
         if (responseData.topics) {
           updateTopicTracker(responseData.topics);
         }
 
-        // --- NEW LOGIC TO SHOW BUTTON ---
         // Check for the completion flag from the backend.
         if (responseData.isDiscoveryComplete === true) {
           // If true, make the report button visible.
           elements.reportButton.style.display = 'inline-block';
         }
-        // --- END NEW LOGIC ---
+        // --- END FIX ---
 
       } catch (error) {
         console.error('Chat Fetch error:', error);
