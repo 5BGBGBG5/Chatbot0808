@@ -18,7 +18,6 @@
       height: 100vh;
       box-sizing: border-box;
     }
-
     .container {
       width: 100%;
       max-width: 800px;
@@ -26,105 +25,30 @@
       flex-direction: column;
       height: 100%;
     }
-
-    h1 {
-      color: #4db8ff;
-      text-align: center;
-    }
-
+    h1 { color: #4db8ff; text-align: center; }
     /* --- Topic Tracker --- */
-    .topic-tracker {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 15px;
-      justify-content: center;
-    }
-    .topic-item {
-      padding: 6px 12px;
-      border-radius: 15px;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      border: 1px solid transparent;
-    }
+    .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; justify-content: center; }
+    .topic-item { padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: 500; transition: all 0.3s ease; border: 1px solid transparent; }
     .status-not-started { background-color: #3a3a3a; color: #a0a0a0; }
     .status-in-progress { background-color: #4caf50; color: #ffffff; animation: pulse-green 2s infinite; border-color: #81c784; }
     .status-completed { background-color: #2196f3; color: #ffffff; }
-
     @keyframes pulse-green {
       0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
       70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
       100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
     }
-
     /* --- Chat Window --- */
-    .chat {
-      border: 1px solid #444;
-      background-color: #2a2a2a;
-      padding: 15px;
-      flex-grow: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-    .msg {
-      margin-bottom: 12px;
-      line-height: 1.5;
-      max-width: 85%;
-    }
+    .chat { border: 1px solid #444; background-color: #2a2a2a; padding: 15px; flex-grow: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; }
+    .msg { margin-bottom: 12px; line-height: 1.5; max-width: 85%; }
     .user { color: #81d4fa; text-align: right; margin-left: auto; }
     .bot { color: #c5e1a5; text-align: left; }
-    
-    /* --- NEW: Button Container in Chat --- */
-    .options-container {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      justify-content: flex-start;
-    }
-    .option-button {
-      padding: 8px 12px;
-      border-radius: 5px;
-      border: 1px solid #4db8ff;
-      background: transparent;
-      color: #4db8ff;
-      cursor: pointer;
-      transition: background-color 0.2s, color 0.2s;
-    }
-    .option-button:hover {
-      background-color: #4db8ff;
-      color: #1e1e1e;
-    }
-
     /* --- Input Area --- */
-    .input-area {
-      display: flex;
-      gap: 10px;
-    }
-    #messageInput {
-      flex-grow: 1;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #555;
-      background: #333;
-      color: #eee;
-      font-size: 16px;
-    }
-    #sendButton, #reportButton {
-      padding: 10px 15px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s;
-    }
+    .input-area { display: flex; gap: 10px; }
+    #messageInput { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: #eee; font-size: 16px; }
+    #sendButton, #reportButton { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
     #sendButton { background-color: #4db8ff; color: #1e1e1e; }
     #sendButton:disabled { background-color: #555; cursor: not-allowed; }
-    #reportButton { background-color: #4caf50; color: #ffffff; }
-
-    /* --- Hide report button by default --- */
-    #reportButton { display: none; }
+    #reportButton { background-color: #4caf50; color: #ffffff; display: none; }
   </style>
 </head>
 <body>
@@ -159,77 +83,63 @@
     
     // --- STATE MANAGEMENT ---
     let chatHistory = [];
+    let sessionId = null; // NEW: To store the unique session ID
 
     // --- CORE FUNCTIONS ---
 
     /**
-     * Updates the topic tracker UI based on the latest topics from the backend.
-     * @param {Array} topics - Array of topic objects with name and status.
+     * --- NEW FUNCTION ---
+     * Generates a universally unique identifier (UUID v4).
+     * @returns {string} A new UUID.
      */
-    function updateTopicTracker(topics = []) {
-        elements.topicTracker.innerHTML = '';
-        topics.forEach(topic => {
-            const topicDiv = document.createElement('div');
-            topicDiv.className = 'topic-item';
-            topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
-            topicDiv.textContent = topic.status === 'Completed' ? `✓ ${topic.name}` : topic.name;
-            elements.topicTracker.appendChild(topicDiv);
-        });
+    function generateUUID() {
+      return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
     }
 
-    /**
-     * Renders a message in the chat window and optionally saves it to history.
-     * @param {string} role - 'user' or 'bot'.
-     * @param {string} content - The message text.
-     * @param {boolean} save - Whether to save the message to chatHistory.
-     */
+    function updateTopicTracker(topics = []) {
+      elements.topicTracker.innerHTML = '';
+      topics.forEach(topic => {
+        const topicDiv = document.createElement('div');
+        topicDiv.className = 'topic-item';
+        topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
+        topicDiv.textContent = topic.status === 'Completed' ? `✓ ${topic.name}` : topic.name;
+        elements.topicTracker.appendChild(topicDiv);
+      });
+    }
+
     function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = `msg ${role}`;
       msgDiv.textContent = `[${role}]: ${content.trim()}`;
       elements.chat.appendChild(msgDiv);
-      elements.chat.scrollTop = elements.chat.scrollHeight; // Auto-scroll to bottom
+      elements.chat.scrollTop = elements.chat.scrollHeight;
       if (save) {
         chatHistory.push({ role, content });
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
       }
     }
-
-    /**
-     * --- NEW FUNCTION ---
-     * Renders clickable option buttons in the chat.
-     * @param {Array<string>} options - An array of strings for the button labels.
-     */
-    function renderOptions(options) {
-      const container = document.createElement('div');
-      container.className = 'options-container';
-
-      options.forEach(optionText => {
-        const button = document.createElement('button');
-        button.className = 'option-button';
-        button.textContent = optionText;
-        button.onclick = () => {
-          // When a button is clicked, send its text as a user message
-          handleSend(optionText);
-          // Remove the buttons after one is clicked
-          container.remove();
-        };
-        container.appendChild(button);
-      });
-
-      elements.chat.appendChild(container);
-      elements.chat.scrollTop = elements.chat.scrollHeight;
-    }
     
     /**
-     * Loads chat history from localStorage and renders it.
+     * Loads session and chat history from localStorage.
      */
-    function loadAndRenderHistory() {
+    function loadState() {
+      // Load session ID or create a new one
+      sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        sessionId = generateUUID();
+        localStorage.setItem('sessionId', sessionId);
+      }
+
+      // Load chat history
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
         chatHistory.forEach(msg => renderMessage(msg.role, msg.content, false));
       }
+      
+      // Display intro message if chat is new
       if (chatHistory.length === 0) {
         renderMessage('bot', INTRO_MESSAGE, true);
       }
@@ -237,19 +147,23 @@
 
     /**
      * Handles sending a message to the backend and processing the response.
-     * @param {string} [prefilledContent] - Optional content from a button click.
      */
-    async function handleSend(prefilledContent = null) {
-      const userContent = prefilledContent || elements.input.value.trim();
+    async function handleSend() {
+      const userContent = elements.input.value.trim();
       if (!userContent) return;
 
       renderMessage('user', userContent);
       elements.input.value = '';
       elements.sendButton.disabled = true;
-      elements.input.disabled = true; // Disable input while waiting
 
       try {
-        const payload = { history: chatHistory };
+        // --- UPDATED PAYLOAD ---
+        // Now includes the session_id along with the chat history.
+        const payload = { 
+          session_id: sessionId,
+          history: chatHistory 
+        };
+        
         const response = await fetch(config.chatWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -261,16 +175,10 @@
         }
         
         const responseData = await response.json(); 
-
         renderMessage('bot', responseData.reply);
         
         if (responseData.topics) {
           updateTopicTracker(responseData.topics);
-        }
-
-        // --- NEW: Check for and render options ---
-        if (responseData.options && responseData.options.length > 0) {
-          renderOptions(responseData.options);
         }
 
         if (responseData.isDiscoveryComplete === true) {
@@ -282,14 +190,10 @@
         renderMessage('bot', 'Sorry, there was an error connecting to the backend. Please try again.');
       } finally {
         elements.sendButton.disabled = false;
-        elements.input.disabled = false; // Re-enable input
         elements.input.focus();
       }
     }
 
-    /**
-     * Handles the "View Report" button click.
-     */
     async function handleViewReport() {
       elements.reportButton.disabled = true;
       elements.reportButton.textContent = 'Generating...';
@@ -320,16 +224,12 @@
     }
 
     // --- EVENT LISTENERS ---
-    elements.sendButton.addEventListener('click', () => handleSend());
-    elements.input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        handleSend();
-      }
-    });
+    elements.sendButton.addEventListener('click', handleSend);
+    elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handleSend(); } });
     elements.reportButton.addEventListener('click', handleViewReport);
 
     // --- INITIALIZATION ---
-    loadAndRenderHistory();
+    loadState(); // Replaces loadAndRenderHistory()
   </script>
 </body>
 </html>
