@@ -37,16 +37,62 @@
       70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
       100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
     }
-    /* --- Chat Window --- */
-    .chat { border: 1px solid #444; background-color: #2a2a2a; padding: 15px; flex-grow: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; }
-.msg { 
-  margin-bottom: 12px; 
-  line-height: 1.5; 
-  max-width: 85%;
-  white-space: pre-wrap; /* Add this line */
-}
-    .user { color: #81d4fa; text-align: right; margin-left: auto; }
-    .bot { color: #c5e1a5; text-align: left; }
+    
+    /* --- UPDATED CHAT STYLES --- */
+    .chat {
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      padding: 20px;
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .msg {
+      padding: 10px 15px;
+      border-radius: 18px;
+      line-height: 1.5;
+      max-width: 80%;
+      white-space: pre-wrap;
+    }
+    .user {
+      background-color: #4db8ff;
+      color: #1e1e1e;
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+    }
+    .bot {
+      background-color: #424242;
+      color: #e0e0e0;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+
+    /* --- NEW TYPING INDICATOR --- */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+    }
+    .typing-indicator span {
+      height: 8px;
+      width: 8px;
+      background-color: #888;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 2px;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing-indicator span:nth-of-type(2) { animation-delay: -0.2s; }
+    .typing-indicator span:nth-of-type(3) { animation-delay: -0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1.0); }
+    }
+
     /* --- Input Area --- */
     .input-area { display: flex; gap: 10px; }
     #messageInput { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: #eee; font-size: 16px; }
@@ -88,15 +134,9 @@
     
     // --- STATE MANAGEMENT ---
     let chatHistory = [];
-    let sessionId = null; // NEW: To store the unique session ID
+    let sessionId = null;
 
     // --- CORE FUNCTIONS ---
-
-    /**
-     * --- NEW FUNCTION ---
-     * Generates a universally unique identifier (UUID v4).
-     * @returns {string} A new UUID.
-     */
     function generateUUID() {
       return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
@@ -117,10 +157,8 @@
     function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = `msg ${role}`;
-// --- Security Note ---
-// .innerHTML can be a security risk if the content isn't from a trusted source.
-// Since you control the AI prompt, it's safe for this internal tool.
-msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
+      // UPDATED: No more prefix, uses innerHTML for formatting
+      msgDiv.innerHTML = content.trim(); 
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
       if (save) {
@@ -129,33 +167,24 @@ msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
       }
     }
     
-    /**
-     * Loads session and chat history from localStorage.
-     */
     function loadState() {
-      // Load session ID or create a new one
       sessionId = localStorage.getItem('sessionId');
       if (!sessionId) {
         sessionId = generateUUID();
         localStorage.setItem('sessionId', sessionId);
       }
 
-      // Load chat history
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
         chatHistory.forEach(msg => renderMessage(msg.role, msg.content, false));
       }
       
-      // Display intro message if chat is new
       if (chatHistory.length === 0) {
         renderMessage('bot', INTRO_MESSAGE, true);
       }
     }
 
-    /**
-     * Handles sending a message to the backend and processing the response.
-     */
     async function handleSend() {
       const userContent = elements.input.value.trim();
       if (!userContent) return;
@@ -164,9 +193,14 @@ msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
       elements.input.value = '';
       elements.sendButton.disabled = true;
 
+      // --- ADDED: Show the typing indicator ---
+      const indicator = document.createElement('div');
+      indicator.className = 'msg bot typing-indicator';
+      indicator.innerHTML = '<span></span><span></span><span></span>';
+      elements.chat.appendChild(indicator);
+      elements.chat.scrollTop = elements.chat.scrollHeight;
+      
       try {
-        // --- UPDATED PAYLOAD ---
-        // Now includes the session_id along with the chat history.
         const payload = { 
           session_id: sessionId,
           history: chatHistory 
@@ -181,6 +215,9 @@ msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
         }
+
+        // --- ADDED: Remove the indicator before showing the message ---
+        indicator.remove();
         
         const responseData = await response.json(); 
         renderMessage('bot', responseData.reply);
@@ -194,6 +231,8 @@ msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
         }
 
       } catch (error) {
+        // --- ADDED: Also remove indicator on error ---
+        indicator.remove();
         console.error('Chat Fetch error:', error);
         renderMessage('bot', 'Sorry, there was an error connecting to the backend. Please try again.');
       } finally {
@@ -237,7 +276,7 @@ msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
     elements.reportButton.addEventListener('click', handleViewReport);
 
     // --- INITIALIZATION ---
-    loadState(); // Replaces loadAndRenderHistory()
+    loadState();
   </script>
 </body>
 </html>
