@@ -3,17 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Discovery Chatbot</title>
+  <title>Inecta Discovery Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* --- Basic Layout & Theme --- */
+    :root {
+      --inecta-blue: #0062F5;
+      --background-light: #F7F9FC;
+      --border-color: #EAEAEA;
+      --body-text-color: #333333;
+      --bot-bubble-bg: #FFFFFF;
+      --user-bubble-bg: var(--inecta-blue);
+      --font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #1e1e1e;
-      color: #e0e0e0;
+      font-family: var(--font-family);
+      background: var(--background-light);
+      color: var(--body-text-color);
       padding: 20px;
       margin: 0;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
       height: 100vh;
       box-sizing: border-box;
@@ -24,63 +35,60 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #FFFFFF;
     }
-    h1 { color: #4db8ff; text-align: center; }
-    /* --- Topic Tracker --- */
-    .topic-tracker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; justify-content: center; }
-    .topic-item { padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: 500; transition: all 0.3s ease; border: 1px solid transparent; }
-    .status-not-started { background-color: #3a3a3a; color: #a0a0a0; }
-    .status-in-progress { background-color: #4caf50; color: #ffffff; animation: pulse-green 2s infinite; border-color: #81c784; }
-    .status-completed { background-color: #2196f3; color: #ffffff; }
-    @keyframes pulse-green {
-      0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+    .header {
+      padding: 15px 20px;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
     }
-    
-    /* --- UPDATED CHAT STYLES --- */
+    .header img {
+      height: 28px;
+      width: auto;
+    }
     .chat {
-      border: 1px solid #444;
-      background-color: #2a2a2a;
       padding: 20px;
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
-      border-radius: 8px;
       display: flex;
       flex-direction: column;
       gap: 15px;
+      background-color: var(--background-light);
     }
     .msg {
-      padding: 10px 15px;
-      border-radius: 18px;
-      line-height: 1.5;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.6;
       max-width: 80%;
       white-space: pre-wrap;
+      font-weight: 400;
     }
     .user {
-      background-color: #4db8ff;
-      color: #1e1e1e;
-      border-bottom-right-radius: 4px;
+      background-color: var(--user-bubble-bg);
+      color: #FFFFFF;
+      border-bottom-right-radius: 5px;
       align-self: flex-end;
     }
     .bot {
-      background-color: #424242;
-      color: #e0e0e0;
-      border-bottom-left-radius: 4px;
+      background-color: var(--bot-bubble-bg);
+      color: var(--body-text-color);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 5px;
       align-self: flex-start;
     }
-
-    /* --- NEW TYPING INDICATOR --- */
     .typing-indicator {
       display: flex;
       align-items: center;
-      padding: 10px 15px;
+      padding: 12px 18px;
     }
     .typing-indicator span {
       height: 8px;
       width: 8px;
-      background-color: #888;
+      background-color: #BDBDBD;
       border-radius: 50%;
       display: inline-block;
       margin: 0 2px;
@@ -92,78 +100,92 @@
       0%, 80%, 100% { transform: scale(0); }
       40% { transform: scale(1.0); }
     }
-
-    /* --- Input Area --- */
-    .input-area { display: flex; gap: 10px; }
-    #messageInput { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: #eee; font-size: 16px; }
-    #sendButton, #reportButton { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
-    #sendButton { background-color: #4db8ff; color: #1e1e1e; }
-    #sendButton:disabled { background-color: #555; cursor: not-allowed; }
-    #reportButton { background-color: #4caf50; color: #ffffff; display: none; }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      border-top: 1px solid var(--border-color);
+      background: #FFFFFF;
+    }
+    #messageInput {
+      flex-grow: 1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: var(--background-light);
+      color: var(--body-text-color);
+      font-size: 16px;
+      font-family: var(--font-family);
+    }
+    #messageInput:focus {
+        outline: none;
+        border-color: var(--inecta-blue);
+        box-shadow: 0 0 0 2px rgba(0, 98, 245, 0.2);
+    }
+    #sendButton {
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      background-color: var(--inecta-blue);
+      color: #FFFFFF;
+      font-size: 16px;
+    }
+    #sendButton:disabled {
+      background-color: #BDBDBD;
+      cursor: not-allowed;
+    }
+    #sendButton:hover:not(:disabled) {
+        opacity: 0.9;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Discovery Assistant</h1>
-    <div id="topicTracker" class="topic-tracker"></div>
+    <div class="header">
+      <img src="https://assets-global.website-files.com/6095323a4a358c146efe1556/609533a30362df563f101880_inecta-logo.svg" alt="Inecta Logo">
+    </div>
     <div id="chat" class="chat"></div>
     <div class="input-area">
       <input id="messageInput" type="text" placeholder="Type your message..." autofocus/>
       <button id="sendButton">Send</button>
-      <button id="reportButton">View Report</button>
     </div>
   </div>
 
   <script>
-    // --- CONFIGURATION ---
     const config = {
       chatWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/inectaQ',
       reportWebhookUrl: 'https://inecta.app.n8n.cloud/webhook/generate-pdf'
     };
     const INTRO_MESSAGE = "Hello! I'm an AI assistant from Inecta, here to help with your business requirements and gap analysis. To get started, could you please tell me your name and a bit about your company?";
     
-    // --- ELEMENT REFERENCES ---
     const elements = {
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
       sendButton: document.getElementById('sendButton'),
-      reportButton: document.getElementById('reportButton'),
-      topicTracker: document.getElementById('topicTracker')
     };
     
-    // --- STATE MANAGEMENT ---
     let chatHistory = [];
     let sessionId = null;
 
-    // --- CORE FUNCTIONS ---
     function generateUUID() {
       return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
       );
     }
 
-    function updateTopicTracker(topics = []) {
-      elements.topicTracker.innerHTML = '';
-      topics.forEach(topic => {
-        const topicDiv = document.createElement('div');
-        topicDiv.className = 'topic-item';
-        topicDiv.classList.add(`status-${topic.status.toLowerCase().replace(' ', '-')}`);
-        topicDiv.textContent = topic.status === 'Completed' ? `✓ ${topic.name}` : topic.name;
-        elements.topicTracker.appendChild(topicDiv);
-      });
-    }
-
     function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = `msg ${role}`;
-      // UPDATED: No more prefix, uses innerHTML for formatting
       msgDiv.innerHTML = content.trim(); 
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
       if (save) {
         chatHistory.push({ role, content });
-        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        localStorage.setItem(`chatHistory_${sessionId}`, JSON.stringify(chatHistory));
       }
     }
     
@@ -174,7 +196,7 @@
         localStorage.setItem('sessionId', sessionId);
       }
 
-      const savedHistory = localStorage.getItem('chatHistory');
+      const savedHistory = localStorage.getItem(`chatHistory_${sessionId}`);
       if (savedHistory) {
         chatHistory = JSON.parse(savedHistory);
         chatHistory.forEach(msg => renderMessage(msg.role, msg.content, false));
@@ -193,7 +215,6 @@
       elements.input.value = '';
       elements.sendButton.disabled = true;
 
-      // --- ADDED: Show the typing indicator ---
       const indicator = document.createElement('div');
       indicator.className = 'msg bot typing-indicator';
       indicator.innerHTML = '<span></span><span></span><span></span>';
@@ -216,22 +237,12 @@
           throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
         }
 
-        // --- ADDED: Remove the indicator before showing the message ---
         indicator.remove();
         
         const responseData = await response.json(); 
         renderMessage('bot', responseData.reply);
         
-        if (responseData.topics) {
-          updateTopicTracker(responseData.topics);
-        }
-
-        if (responseData.isDiscoveryComplete === true) {
-          elements.reportButton.style.display = 'inline-block';
-        }
-
       } catch (error) {
-        // --- ADDED: Also remove indicator on error ---
         indicator.remove();
         console.error('Chat Fetch error:', error);
         renderMessage('bot', 'Sorry, there was an error connecting to the backend. Please try again.');
@@ -241,41 +252,9 @@
       }
     }
 
-    async function handleViewReport() {
-      elements.reportButton.disabled = true;
-      elements.reportButton.textContent = 'Generating...';
-      try {
-        const response = await fetch(config.reportWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ history: chatHistory })
-        });
-        if (!response.ok) {
-          throw new Error(`Report Generation Error: ${response.statusText}`);
-        }
-        const reportHtml = await response.text();
-        const reportWindow = window.open();
-        if (reportWindow) {
-          reportWindow.document.write(reportHtml);
-          reportWindow.document.close();
-        } else {
-          alert('Please allow pop-ups to view the report.');
-        }
-      } catch (error) {
-        console.error('Report Fetch error:', error);
-        alert('Could not generate the report. Please try again.');
-      } finally {
-        elements.reportButton.disabled = false;
-        elements.reportButton.textContent = 'View Report';
-      }
-    }
-
-    // --- EVENT LISTENERS ---
     elements.sendButton.addEventListener('click', handleSend);
     elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handleSend(); } });
-    elements.reportButton.addEventListener('click', handleViewReport);
 
-    // --- INITIALIZATION ---
     loadState();
   </script>
 </body>
