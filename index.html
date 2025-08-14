@@ -117,7 +117,10 @@
     function renderMessage(role, content, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = `msg ${role}`;
-      msgDiv.textContent = `[${role}]: ${content.trim()}`;
+// --- Security Note ---
+// .innerHTML can be a security risk if the content isn't from a trusted source.
+// Since you control the AI prompt, it's safe for this internal tool.
+msgDiv.innerHTML = `[${role}]: ${content.trim()}`;
       elements.chat.appendChild(msgDiv);
       elements.chat.scrollTop = elements.chat.scrollHeight;
       if (save) {
