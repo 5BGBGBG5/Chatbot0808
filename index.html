@@ -6,20 +6,30 @@
   <title>Inecta Discovery Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&family=Verdana&display=swap" rel="stylesheet">
   <style>
     :root {
-      --inecta-blue: #0062F5;
-      --inecta-green: #4CAF50;
-      --background-light: #F7F9FC;
+      /* Official Inecta Brand Colors */
+      --inecta-green: #124030;
+      --inecta-teal: #00CCCC;
+      --inecta-yellow: #FFD44D;
+      --inecta-tan: #DECF9E;
+      --dark-grey: #575763;
+      --light-grey: #999999;
+      
+      /* UI Theme Colors */
+      --background-light: #F8F8F8;
       --border-color: #EAEAEA;
-      --body-text-color: #333333;
+      --body-text-color: #293036;
       --bot-bubble-bg: #FFFFFF;
-      --user-bubble-bg: var(--inecta-blue);
-      --font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --user-bubble-bg: var(--inecta-green);
+
+      /* Typography from Brand Guide */
+      --font-heading: 'Open Sans', sans-serif; /* Gordita Replacement */
+      --font-body: 'Verdana', sans-serif;
     }
     body {
-      font-family: var(--font-family);
+      font-family: var(--font-body);
       background: var(--background-light);
       color: var(--body-text-color);
       padding: 20px;
@@ -36,8 +46,8 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      border-radius: 16px;
       overflow: hidden;
       background: #FFFFFF;
     }
@@ -66,7 +76,6 @@
       line-height: 1.6;
       max-width: 80%;
       white-space: pre-wrap;
-      font-weight: 400;
     }
     .user {
       background-color: var(--user-bubble-bg);
@@ -116,26 +125,28 @@
       background: var(--background-light);
       color: var(--body-text-color);
       font-size: 16px;
-      font-family: var(--font-family);
+      font-family: var(--font-body);
     }
     #messageInput:focus {
         outline: none;
-        border-color: var(--inecta-blue);
-        box-shadow: 0 0 0 2px rgba(0, 98, 245, 0.2);
+        border-color: var(--inecta-teal);
+        box-shadow: 0 0 0 2px rgba(0, 204, 204, 0.2);
     }
     #sendButton, #reportButton {
       padding: 10px 20px;
       border-radius: 20px;
       border: none;
       cursor: pointer;
-      font-weight: 600;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      text-transform: uppercase; /* As per brand guidelines */
       transition: all 0.2s ease;
       font-size: 16px;
       white-space: nowrap;
     }
     #sendButton {
-      background-color: var(--inecta-blue);
-      color: #FFFFFF;
+      background-color: var(--inecta-teal);
+      color: #000000; /* Black text as per brand guidelines */
     }
     #sendButton:disabled {
       background-color: #BDBDBD;
@@ -155,13 +166,13 @@
 
   <div class="container">
     <div class="header">
-      <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY2IiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTY2IDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNOS44MzEzMyAzOC43MTk5QzQuNDA5NTkgMzguNzE5OSAwIDM0LjMwOTggMCAyOC44ODk5QzAgMjMuNDY5OSA0LjQwOTU5IDE5LjA2OTkgOS44MzEzMyAxOS4wNjk5QzE1LjI1MyAxOS4wNjk5IDE5LjY2MjYgMjMuNDY5OSAxOS42NjI2IDI4Ljg4OTlDMTkuNjYyNiAzNC4zMDk4IDE1LjI1MyAzOC43MTk5IDkuODMxMzMgMzguNzE5OVpNNC4yODYzNyAyOC44ODk5QzQuMjg2MzcgMzEuOTQ5OSA2Ljc4NTAxIDM0LjQ0OTkgOS44MzEzMyAzNC40NDk5QzEyLjg3NzcgMzQuNDQ5OSAxNS4zNzYzIDMxLjk0OTkgMTUuMzc2MyAyOC44ODk5QzE1LjM3NjMgMjUuODI5OSAxMi44Nzc3IDIzLjMyOTkgOS44MzEzMyAyMy4zMjk5QzYuNzg1MDEgMjMuMzI5OSA0LjI4NjM3IDI1LjgyOTkgNC4yODYzNyAyOC44ODk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNMzAuNzU4OCAzOC43MTk5QzI1LjMyNzEgMzguNzE5OSAyMC45MTc1IDM0LjMwOTggMjAuOTE3NSAyOC44ODk5QzIwLjkxNzUgMjMuNDY5OSAyNS4zMjcxIDE5LjA2OTkgMzAuNzU4OCAxOS4wNjk5QzM2LjIwMDYgMTkuMDY5OSA0MC42MTAyIDIzLjQ2OTkgNDAuNjEwMiAyOC44ODk5QzQwLjYxMDIgMzQuMzA5OCAzNi4yMDA2IDM4LjcxOTkgMzAuNzU4OCAzOC43MTk5Wk0yNS4yMTM5IDI4Ljg4OTlDMjUuMjEzOSAzMS45NDk5IDI3LjcxMjUgMzQuNDQ5OSAzMC43NTg4IDM0LjQ0OTlDMzMuODA1MSAzNC40NDk5IDM2LjMwMzggMzEuOTQ5OSAzNi4zMDM4IDI4Ljg4OTlDMzYuMzAzOCAyNS44Mjk5IDMzLjgwNTEgMjMuMzI5OSAzMC43NTg4IDIzLjMyOTlDMjcuNzEyNSAyMy4zMjk5IDI1LjIxMzkgMjUuODI5OSAyNS4yMTM5IDI4Ljg4OTlaIiBmaWxsPSIjMDA2MkY4Ii8+CjxwYXRoIGQ9Ik01MS42NzM4IDM4LjcxOTlDNDYuMjQyIDM4LjcxOTkgNDEuODMyNSAzNC4zMDk4IDQxLjgzMjUgMjguODg5OUM0MS44MzI1IDEyMy40Njk5IDQ2LjI0MiAxOS4wNjk5IDUxLjY3MzggMTkuMDY5OUM1Ny4xMTU1IDE5LjA2OTkgNjEuNTI1MSAyMy40Njk5IDYxLjUyNTEgMjguODg5OUM2MS41MjUxIDM0LjMwOTggNTcuMTE1NSA3OC43MTk5IDUxLjY3MzggMzguNzE5OVpNNTYuMTI4OCAyOC44ODk5QzQ2LjEyODggMzEuOTQ5OSA0OC42Mjc1IDM0LjQ0OTkgNTEuNjc7OCAzNC40NDk5QzU0LjcxMDEgMzQuNDQ5OSA1Ny4yMDk4IDMxLjk0OTkgNTcuMjA5OCAyOC44ODk5QzU3LjIwOTggMjUuODI5OSA1NC43MTAxIDIzLjMyOTkgNTEuNjc3OCAyMy4zMjk5QzQ4LjYyNzUgMjMuMzI5OSA0Ni4xMjg4IDI1LjgyOTkgNDYuMTI4OCAyOC44ODk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNOS44MzEzMyA3Ljg1OTk5QzguNzM1NTYgNy44NTk5OSA3Ljg0Mzk4IDYuOTY0NDEgNy44NDM5OCA1Ljg2OTk5QzcuODQzOTggNC43NzU1NiA4LjczNTU2IDMuODc5OTkgOS44MzEzMyAzLjg3OTk5QzEwLjkzNzEgMy44Nzk5OSAxMS44MTYgNC43NzU1NiAxMS44MTYgNS44Njk5OUMxMS44MTYgNi45NjQ0MSAxMC45MzcxIDcuODU5OTkgOS44MzEzMyA3Ljg1OTk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNNzUuNjM5MyAxOC41ODk5SDY5Ljc0OTNWNy44Njk5SDc1LjYzOTNDNzkuODg5MyA3Ljg2OTkgODMuMzI5MyAxMS4zMTk5IDgzLjMyOTMgMTUuNTY5OUM4My4zMjkzIDE5LjgyOTkgNzkuODg5MyAxOC41ODk5IDc1LjYzOTMgMTguNTg5OVpNNzUuNjM5MyAwLjk5OTg3OEg2Ny41OTkzVjI5LjE5OTlINzUuNjM5M0M4NC4xNzkzIDI5LjE5OTkgOTAuOTk5MyAyMi4zNzk5IDkwLjk5OTMgMTMuODg5OUM5MC45OTkzIDUuMzk5ODggODQuMTc5MyAwLjk5OTg3OCA3NS42MzkzIDAuOTk5ODc4WiIgZmlsbD0iIzBFMTAzQSIvPgo8cGF0aCBkPSJNOTUuNTQxNyAwLjk5OTg3OEg5My4zOTE3VjI5LjE5OTlIOTUuNTQxN1YwLjk5OTg3OFoiIGZpbGw9IiMwRTEwM0EiLz4KPHBhdGggZD0iTTExMS43NDQgMC45OTk4NzhIMTA5LjU5NEwyMDEuMzQ0IDEzLjg4OTlIMTAxLjM0NFYwLjk5OTg3OEg5OS4xOTM4VjI5LjE5OTlIMTAxLjM0NFYxNS40OTk5SDEwMS4zNDRMMTA5LjU5NCAyOS4xOTk5SDExMS43NDRMMTE5Ljk5NCAxNS40OTk5SDEyMC4wMDRWMTkuMTk5OUgxMjIuMTU0VjAuOTk5ODc4SDExOS45OTRMMTExLjc0NCAwLjk5OTg3OFoiIGZpbGw9IiMwRTEwM0EiLz4KPHBhdGggZD0iTTE0Mi45NjkgMTUuMDM5OUMxNDIuOTY5IDYuNzM5ODggMTQ5LjYyOSAwLjk5OTg3OCAxNTcuOTQ5IDAuOTk5ODc4QzE2Ni4yNjkgMC45OTk4NzggMTcyLjk0OSw2LjczOTg4IDE3Mi45NDkgMTUuMDM5OUMxNzIuOTQ5IDIzLjM1OTkgMTY2LjI2OSAyOS4xOTk5IDE1Ny45NDkgMjkuMTk5OUMxNDkuNjI5IDI5LjE5OTkgMTQyLjk2OSAyMy4zNTk5IDE0Mi45NjkgMTUuMDM5OVpNMTY4LjY1OSAxNS4wMzk5QzE2OC42NTkgOC44Nzk4OCAxNjMuODQ5IDQuMjg5ODggMTU3Ljk0OSA0LjI4OTg4QzE1Mi4wNDkgNC4yODk4OCAxNDcuMjM5IDguODc5ODggMTQ3LjIzOSAxNS4wMzk5QzE0Ny4yMzkgMjEuMTk5OSAxNTIuMDQ5IDI1Ljc5OTkgMTU3Ljk0OSAyNS43OTk5QzE2My44NDkgMjUuNzk5OSAxNjguNjU5IDIxLjE5OTkgMTY4LjY1OSAxNS4wMzk5WiIgZmlsbD0iIzBFMTAzQSIvPgo8L3N2Zz4=" alt="Inecta Logo">
+      <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY2IiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTY2IDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNOS44MzEzMyAzOC43MTk5QzQuNDA5NTkgMzguNzE5OSAwIDM0LjMwOTggMCAyOC44ODk5QzAgMjMuNDY5OSA0LjQwOTU5IDE5LjA2OTkgOS44MzEzMyAxOS4wNjk5QzE1LjI1MyAxOS4wNjk5IDE5LjY2MjYgMjMuNDY5OSAxOS42NjI2IDI4Ljg4OTlDMTkuNjYyNiAzNC4zMDk4IDE1LjI1MyAzOC43MTk5IDkuODMxMzMgMzguNzE5OVpNNC4yODYzNyAyOC44ODk5QzQuMjg2MzcgMzEuOTQ5OSA2Ljc4NTAxIDM0LjQ0OTkgOS44MzEzMyAzNC40NDk5QzEyLjg3NzcgMzQuNDQ5OSAxNS4zNzYzIDMxLjk0OTkgMTUuMzc2MyAyOC44ODk5QzE1LjM3NjMgMjUuODI5OSAxMi44Nzc3IDIzLjMyOTkgOS44MzEzMyAyMy4zMjk5QzYuNzg1MDEgMjMuMzI5OSA0LjI4NjM3IDI1LjgyOTkgNC4yODYzNyAyOC44ODk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNMzAuNzU4OCAzOC43MTk5QzI1LjMyNzEgMzguNzE5OSAyMC45MTc1IDM0LjMwOTggMjAuOTE3NSAyOC44ODk5QzIwLjkxNzUgMjMuNDY5OSAyNS4zMjcxIDE5LjA2OTkgMzAuNzU4OCAxOS4wNjk5QzM2LjIwMDYgMTkuMDY5OSA0MC42MTAyIDIzLjQ2OTkgNDAuNjEwMiAyOC44ODk5QzQwLjYxMDIgMzQuMzA5OCAzNi4yMDA2IDM4LjcxOTkgMzAuNzU4OCAzOC43MTk5Wk0yNS4yMTM5IDI4Ljg4OTlDMjUuMjEzOSAzMS45NDk5IDI3LjcxMjUgMzQuNDQ5OSAzMC43NTg4IDM0LjQ0OTlDMzMuODA1MSAzNC40NDk5IDM2LjMwMzggMzEuOTQ5OSAzNi4zMDM4IDI4Ljg4OTlDMzYuMzAzOCAyNS44Mjk5IDMzLjgwNTEgMjMuMzI5OSAzMC43NTg4IDIzLjMyOTlDMjcuNzEyNSAyMy4zMjk5IDI1LjIxMzkgMjUuODI5OSAyNS4yMTM5IDI4Ljg4OTlaIiBmaWxsPSIjMDA2MkY4Ii8+CjxwYXRoIGQ9Ik01MS42NzM4IDM4LjcxOTlDNDYuMjQyIDM4LjcxOTkgNDEuODMyNSAzNC4zMDk4IDQxLjgzMjUgMjguODg5OUM0MS44MzI1IDEyMy40Njk5IDQ2LjI0MiAxOS4wNjk5IDUxLjY3MzggMTkuMDY5OUM1Ny4xMTU1IDE5LjA2OTkgNjEuNTI1MSAyMy40Njk5IDYxLjUyNTEgMjguODg5OUM2MS41MjUxIDM0LjMwOTggNTcuMTE1NSA3OC43MTk5IDUxLjY3MzggMzguNzE5OVpNNTYuMTI4OCAyOC44ODk5QzQ2LjEyODggMzEuOTQ5OSA0OC42Mjc1IDM0LjQ0OTkgNTEuNjc7OCAzNC40NDk5QzU0LjcxMDEgMzQuNDQ5OSA1oty4yMDk4IDMxLjk0OTkgNTcuMjA5OCAyOC44ODk5QzU3LjIwOTggMjUuODI5OSA1NC43MTAxIDIzLjMyOTkgNTEuNjc3OCAyMy4zMjk5QzQ4LjYyNzUgMjMuMzI5OSA0Ni4xMjg4IDI1LjgyOTkgNDYuMTI4OCAyOC44ODk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNOS44MzEzMyA3Ljg1OTk5QzguNzM1NTYgNy44NTk5OSA3Ljg0Mzk4IDYuOTY0NDEgNy44NDM5OCA1Ljg2OTk5QzcuODQzOTggNC43NzU1NiA4LjczNTU2IDMuODc5OTkgOS44MzEzMyAzLjg3OTk5QzEwLjkzNzEgMy44Nzk5OSAxMS44MTYgNC43NzU1NiAxMS44MTYgNS44Njk5OUMxMS44MTYgNi45NjQ0MSAxMC45MzcxIDcuODU5OTkgOS44MzEzMyA3Ljg1OTk5WiIgZmlsbD0iIzAwNjJGOCIvPgo8cGF0aCBkPSJNNzUuNjM5MyAxOC41ODk5SDY5Ljc0OTNWNy44Njk5SDc1LjYzOTNDNzkuODg5MyA3Ljg2OTkgODMuMzI5MyAxMS4zMTk5IDgzLjMyOTMgMTUuNTY5OUM4My4zMjkzIDE5LjgyOTkgNzkuODg5MyAxOC41ODk5IDc1LjYzOTMgMTguNTg5OVpNNzUuNjM5MyAwLjk5OTg3OEg2Ny41OTkzVjI5LjE5OTlINzUuNjM5M0M4NC4xNzkzIDI5LjE5OTkgOTAuOTk5MyAyMi4zNzk5IDkwLjk5OTMgMTMuODg5OUM5MC45OTkzIDUuMzk5ODggODQuMTc5MyAwLjk5OTg3OCA3NS42MzkzIDAuOTk5ODc4WiIgZmlsbD0iIzBFMTAzQSIvPgo8cGF0aCBkPSJNOTUuNTQxNyAwLjk5OTg3OEg5My4zOTE3VjI5LjE5OTlIOTUuNTQxN1YwLjk5OTg3OFoiIGZpbGw9IiMwRTEwM0EiLz4KPHBhdGggZD0iTTExMS43NDQgMC45OTk4NzhIMTA5LjU5NEwyMDEuMzQ0IDEzLjg4OTlIMTAxLjM0NFYwLjk5OTg3OEg5OS4xOTM4VjI5LjE5OTlIMTAxLjM0NFYxNS40OTk5SDEwMS4zNDRMMTA5LjU5NCAyOS4xOTk5SDExMS43NDRMMTE5Ljk5NCAxNS40OTk5SDEyMC4wMDRWMTkuMTk5OUgxMjIuMTU0VjAuOTk5ODc4SDExOS45OTRMMTExLjc0NCAwLjk5OTg3OFoiIGZpbGw9IiMwRTEwM0EiLz4KPHBhdGggZD0iTTE0Mi45NjkgMTUuMDM5OUMxNDIuOTY5IDYuNzM5ODggMTQ5LjYyOSAwLjk5OTg3OCAxNTcuOTQ5IDAuOTk5ODc4QzE2Ni4yNjkgMC45OTk4NzggMTcyLjk0OSw2LjczOTg4IDE3Mi45NDkgMTUuMDM5OUMxNzIuOTQ5IDIzLjM1OTkgMTY2LjI2OSAyOS4xOTk5IDE1Ny45NDkgMjkuMTk5OUMxNDkuNjI5IDI5LjE5OTkgMTQyLjk2OSAyMy4zNTk5IDE0Mi45NjkgMTUuMDM5OVpNMTY4LjY1OSAxNS4wMzk5QzE2OC42NTkgOC44Nzk4OCAxNjMuODQ5IDQuMjg5ODggMTU3Ljk0OSA0LjI4OTg4QzE1Mi4wNDkgNC4yODk4OCAxNDcuMjM5IDguODc5ODggMTQ3LjIzOSAxNS4wMzk5QzE0Ny4yMzkgMjEuMTk5OSAxNTIuMDQ5IDI1Ljc5OTkgMTU3Ljk0OSAyNS43OTk5QzE2My44NDkgMjUuNzk5OSAxNjguNjU5IDIxLjE5OTkgMTY4LjY1OSAxNS4wMzk5WiIgZmlsbD0iIzBFMTAzQSIvPgo8L3N2Zz4=" alt="Inecta Logo">
     </div>
     <div id="chat" class="chat"></div>
     <div class="input-area">
       <input id="messageInput" type="text" placeholder="Type your message..." autofocus/>
-      <button id="sendButton">Send</button>
-      <button id="reportButton">View Report</button>
+      <button id="sendButton">SEND</button>
+      <button id="reportButton">VIEW REPORT</button>
     </div>
   </div>
 
@@ -271,7 +282,7 @@
 
     async function handleViewReport() {
       elements.reportButton.disabled = true;
-      elements.reportButton.textContent = 'Generating...';
+      elements.reportButton.textContent = 'GENERATING...';
       try {
         const response = await fetch(config.reportWebhookUrl, {
           method: 'POST',
@@ -294,7 +305,7 @@
         alert('Could not generate the report. Please try again.');
       } finally {
         elements.reportButton.disabled = false;
-        elements.reportButton.textContent = 'View Report';
+        elements.reportButton.textContent = 'VIEW REPORT';
       }
     }
 
