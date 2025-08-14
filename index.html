@@ -39,7 +39,12 @@
     }
     /* --- Chat Window --- */
     .chat { border: 1px solid #444; background-color: #2a2a2a; padding: 15px; flex-grow: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; }
-    .msg { margin-bottom: 12px; line-height: 1.5; max-width: 85%; }
+.msg { 
+  margin-bottom: 12px; 
+  line-height: 1.5; 
+  max-width: 85%;
+  white-space: pre-wrap; /* Add this line */
+}
     .user { color: #81d4fa; text-align: right; margin-left: auto; }
     .bot { color: #c5e1a5; text-align: left; }
     /* --- Input Area --- */
