@@ -10,6 +10,7 @@
   <style>
     :root {
       --inecta-blue: #0062F5;
+      --inecta-green: #4CAF50;
       --background-light: #F7F9FC;
       --border-color: #EAEAEA;
       --body-text-color: #333333;
@@ -122,22 +123,30 @@
         border-color: var(--inecta-blue);
         box-shadow: 0 0 0 2px rgba(0, 98, 245, 0.2);
     }
-    #sendButton {
+    #sendButton, #reportButton {
       padding: 10px 20px;
       border-radius: 20px;
       border: none;
       cursor: pointer;
       font-weight: 600;
       transition: all 0.2s ease;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    #sendButton {
       background-color: var(--inecta-blue);
       color: #FFFFFF;
-      font-size: 16px;
     }
     #sendButton:disabled {
       background-color: #BDBDBD;
       cursor: not-allowed;
     }
-    #sendButton:hover:not(:disabled) {
+    #reportButton {
+      background-color: var(--inecta-green);
+      color: #FFFFFF;
+      display: none; /* Hidden by default */
+    }
+    #sendButton:hover:not(:disabled), #reportButton:hover:not(:disabled) {
         opacity: 0.9;
     }
   </style>
@@ -145,13 +154,14 @@
 <body>
 
   <div class="container">
-<div class="header">
+    <div class="header">
       <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='129' height='32' fill='none'%3E%3Cpath fill='%230062F5' d='M9.83 31.08a9.83 9.83 0 1 1 9.82-9.83 9.83 9.83 0 0 1-9.82 9.83Zm0-17.5a7.68 7.68 0 1 0 7.68 7.67A7.68 7.68 0 0 0 9.84 13.58Z'/%3E%3Cpath fill='%230062F5' d='M30.75 31.08a9.83 9.83 0 1 1 9.83-9.83 9.83 9.83 0 0 1-9.83 9.83Zm0-17.5a7.68 7.68 0 1 0 7.68 7.67 7.68 7.68 0 0 0-7.68-7.67Z'/%3E%3Cpath fill='%230062F5' d='M51.68 31.08a9.83 9.83 0 1 1 9.83-9.83 9.83 9.83 0 0 1-9.83 9.83Zm0-17.5a7.68 7.68 0 1 0 7.68 7.67 7.68 7.68 0 0 0-7.68-7.67Z'/%3E%3Cpath fill='%230062F5' d='M9.83 2.15A2.15 2.15 0 1 1 7.68 0a2.15 2.15 0 0 1 2.15 2.15Z'/%3E%3Cpath fill='%230E103A' d='M75.3 21.06V.9h2.15v28.3h-2.15V23.2h-5.83v5.98h-2.15V.9h8.2a9.5 9.5 0 0 1 9.48 9.5 9.5 9.5 0 0 1-9.48 9.5h-5.92v1.16Zm.22-10.45h5.5a7.35 7.35 0 0 0 7.33-7.34 7.35 7.35 0 0 0-7.34-7.33h-5.5v14.67h.01Z'/%3E%3Cpath fill='%230E103A' d='M93.38 29.2V.9h2.15v28.3h-2.15Z'/%3E%3Cpath fill='%230E103A' d='M111.41 29.2 103.5 15.6v13.6h-2.15V.9h2.15l7.92 13.6V.9h2.15v28.3h-2.15Z'/%3E%3Cpath fill='%230E103A' d='M128.08 15.05c0-8.2 6.66-14.86 14.86-14.86s14.86 6.66 14.86 14.86-6.66 14.86-14.86 14.86-14.86-6.66-14.86-14.86Zm27.57 0c0-7-5.7-12.7-12.7-12.7s-12.71 5.7-12.71 12.7 5.7 12.7 12.7 12.7 12.7-5.7 12.7-12.7Z' transform='translate(-61.4 -0.01) scale(0.9999)'/%3E%3C/svg%3E" alt="Inecta Logo">
     </div>
     <div id="chat" class="chat"></div>
     <div class="input-area">
       <input id="messageInput" type="text" placeholder="Type your message..." autofocus/>
       <button id="sendButton">Send</button>
+      <button id="reportButton">View Report</button>
     </div>
   </div>
 
@@ -166,6 +176,7 @@
       chat: document.getElementById('chat'),
       input: document.getElementById('messageInput'),
       sendButton: document.getElementById('sendButton'),
+      reportButton: document.getElementById('reportButton'),
     };
     
     let chatHistory = [];
@@ -242,6 +253,13 @@
         const responseData = await response.json(); 
         renderMessage('bot', responseData.reply);
         
+        // Check for the completion flag and show the report button
+        if (responseData.isDiscoveryComplete === true) {
+          elements.reportButton.style.display = 'inline-block';
+          elements.sendButton.style.display = 'none'; // Hide send button
+          elements.input.style.display = 'none'; // Hide input field
+        }
+        
       } catch (error) {
         indicator.remove();
         console.error('Chat Fetch error:', error);
@@ -252,8 +270,38 @@
       }
     }
 
+    async function handleViewReport() {
+      elements.reportButton.disabled = true;
+      elements.reportButton.textContent = 'Generating...';
+      try {
+        const response = await fetch(config.reportWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ history: chatHistory })
+        });
+        if (!response.ok) {
+          throw new Error(`Report Generation Error: ${response.statusText}`);
+        }
+        const reportHtml = await response.text();
+        const reportWindow = window.open();
+        if (reportWindow) {
+          reportWindow.document.write(reportHtml);
+          reportWindow.document.close();
+        } else {
+          alert('Please allow pop-ups to view the report.');
+        }
+      } catch (error) {
+        console.error('Report Fetch error:', error);
+        alert('Could not generate the report. Please try again.');
+      } finally {
+        elements.reportButton.disabled = false;
+        elements.reportButton.textContent = 'View Report';
+      }
+    }
+
     elements.sendButton.addEventListener('click', handleSend);
-    elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handleSend(); } });
+    elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !elements.sendButton.disabled) { handleSend(); } });
+    elements.reportButton.addEventListener('click', handleViewReport);
 
     loadState();
   </script>
